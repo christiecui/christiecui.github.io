@@ -90,7 +90,8 @@
 <p>【反射&#x2F;监听】优点：开发简单，上线快 缺点：性能损耗，拓展差<br>【字节码增强】优点：性能消耗小，拓展好 缺点：开发门槛高</p>
 <h2 id="2、What-is-ASM"><a href="#2、What-is-ASM" class="headerlink" title="2、What is ASM"></a>2、What is ASM</h2><p><strong>简单来说，ASM是一个“在编译时”操作Java字节码的类库</strong><br>其他的类库也有AspectJ，ReDex，他们广泛的应用于切面编程（AOP），属于切面框架，为了能够更好的理解ASM是什么，可以从下面三个方面来解释</p>
 <h3 id="1）ASM能做什么"><a href="#1）ASM能做什么" class="headerlink" title="1）ASM能做什么"></a>1）ASM能做什么</h3><h4 id="ASM框架的原理"><a href="#ASM框架的原理" class="headerlink" title="ASM框架的原理"></a>ASM框架的原理</h4><p>一个.java文件经过Java编译器（javac）编译之后会生成一个.class文件。在.class文件中，存储的是字节码（ByteCode）数据，如下图所示。ASM所的操作对象是是字节码（ByteCode），而在许多情况下，字节码（ByteCode）的具体表现形式是.class文件。</p>
-<p><img src="https://s2.51cto.com/images/20210618/1624004678130912.jpeg?x-oss-process=image/watermark,size_14,text_QDUxQ1RP5Y2a5a6i,color_FFFFFF,t_30,g_se,x_10,y_10,shadow_20,type_ZmFuZ3poZW5naGVpdGk=/format,webp/resize,m_fixed,w_1184" alt="Java ASM系列：（001）ASM介绍_Java"></p>
+<img src="https://p.ipic.vip/o597o6.png" alt="image-20231020114023027" style="zoom:50%;" />
+
 <h4 id="ASM能做什么"><a href="#ASM能做什么" class="headerlink" title="ASM能做什么"></a>ASM能做什么</h4><p>父类：修改成一个新的父类<br>接口：添加一个新的接口、删除已有的接口<br>字段：添加一个新的字段、删除已有的字段<br>方法：添加一个新的方法、删除已有的方法、修改已有的方法</p>
 <p><img src="https://lsieun.github.io/assets/images/java/asm/what-asm-can-do.png" alt="What ASM Can Do"></p>
 <h4 id="为什么要用ASM"><a href="#为什么要用ASM" class="headerlink" title="为什么要用ASM"></a>为什么要用ASM</h4><p>这里就不得不对比下编译插桩的三个方式，通过对比来说，<strong>在无埋点覆盖率的指标下，用ASM是最佳的选择</strong></p>
