@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>Christiecui的博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="一、Previous Review字节码增强的原理就是通过Transform将class文件，通过Gradle Task进行流水线读取与处理，并写回下一个Transform中   因此本文将分析进行class的改写与实战，根据下图  二、核心API选择1、 前言：Transform API 是 AGP1.5 就引入的特性，主要用于在 Android 构建过程中，在 Class转Dex的过程中修改">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Christiecui的博客">
+<meta property="og:url" content="http://example.com/2023/08/23/%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A52%20-%20-%20ASM%20Transform%E5%AE%9E%E6%88%98/index.html">
+<meta property="og:site_name" content="Christiecui的博客">
+<meta property="og:description" content="一、Previous Review字节码增强的原理就是通过Transform将class文件，通过Gradle Task进行流水线读取与处理，并写回下一个Transform中   因此本文将分析进行class的改写与实战，根据下图  二、核心API选择1、 前言：Transform API 是 AGP1.5 就引入的特性，主要用于在 Android 构建过程中，在 Class转Dex的过程中修改">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://p.ipic.vip/npbw4v.png">
+<meta property="og:image" content="https://p.ipic.vip/zn69jc.png">
+<meta property="og:image" content="https://p.ipic.vip/im3cva.png">
+<meta property="og:image" content="https://p.ipic.vip/lagi6n.jpg">
+<meta property="og:image" content="https://p.ipic.vip/0niaez.jpg">
+<meta property="og:image" content="https://p.ipic.vip/dpw64i.jpg">
+<meta property="og:image" content="https://p.ipic.vip/hkfl82.png">
+<meta property="og:image" content="https://p.ipic.vip/bl9h0f.png">
+<meta property="og:image" content="https://p.ipic.vip/qq20v0.jpg">
+<meta property="og:image" content="https://p.ipic.vip/168ga9.jpg">
+<meta property="og:image" content="https://p.ipic.vip/wswkib.jpg">
+<meta property="og:image" content="https://p.ipic.vip/qak3kq.jpg">
+<meta property="og:image" content="https://p.ipic.vip/clphzk.jpg">
+<meta property="og:image" content="http://example.com/Users/cao884203/Library/Application%20Support/typora-user-images/image-20231101194538898.png">
+<meta property="og:image" content="https://p.ipic.vip/k1g7m8.jpg">
+<meta property="og:image" content="https://p.ipic.vip/a51lgs.png">
+<meta property="og:image" content="https://s2.51cto.com/images/20210821/1629535019505703.png?x-oss-process=image/watermark,size_14,text_QDUxQ1RP5Y2a5a6i,color_FFFFFF,t_30,g_se,x_10,y_10,shadow_20,type_ZmFuZ3poZW5naGVpdGk=/format,webp/resize,m_fixed,w_1184">
+<meta property="og:image" content="https://p.ipic.vip/9xw8qn.png">
+<meta property="og:image" content="https://p.ipic.vip/phk7qf.png">
+<meta property="og:image" content="https://p.ipic.vip/o3737z.png">
+<meta property="og:image" content="https://p.ipic.vip/xo739b.png">
+<meta property="article:published_time" content="2023-08-23T03:36:53.897Z">
+<meta property="article:modified_time" content="2023-11-01T12:20:12.347Z">
+<meta property="article:author" content="christiecui">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://p.ipic.vip/npbw4v.png">
+  
+    <link rel="alternate" href="/atom.xml" title="Christiecui的博客" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Christiecui的博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS 订阅"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="搜索"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-从零单学跨平台无埋点上报2 - - ASM Transform实战" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/08/23/%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A52%20-%20-%20ASM%20Transform%E5%AE%9E%E6%88%98/" class="article-date">
+  <time class="dt-published" datetime="2023-08-23T03:36:53.897Z" itemprop="datePublished">2023-08-23</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="一、Previous-Review"><a href="#一、Previous-Review" class="headerlink" title="一、Previous Review"></a>一、Previous Review</h2><p>字节码增强的原理就是通过Transform将class文件，通过Gradle Task进行流水线读取与处理，并写回下一个Transform中</p>
+<img src="https://p.ipic.vip/npbw4v.png" alt="image-20230705105542384" style="zoom: 20%;" />
+
+<p>因此本文将分析进行class的改写与实战，根据下图</p>
+<p><img src="https://p.ipic.vip/zn69jc.png" alt="image-20230922201450418"></p>
+<h2 id="二、核心API选择"><a href="#二、核心API选择" class="headerlink" title="二、核心API选择"></a>二、核心API选择</h2><h3 id="1、-前言："><a href="#1、-前言：" class="headerlink" title="1、 前言："></a>1、 前言：</h3><p>Transform API 是 AGP1.5 就引入的特性，主要用于在 Android 构建过程中，在 Class转Dex的过程中修改 Class 字节码。利用 Transform API，我们可以拿到所有参与构建的 Class 文件，然后可以借助ASM 等字节码编辑工具进行修改，插入自定义逻辑。</p>
+<p>国内很多团队都或多或少的用 AGP 的 Transform API 来搞点儿黑科技，比如无痕埋点，耗时统计，方法替换等。但是在AGP7.0中Transform已经被标记为废弃了，替换为AsmClassVisitorFactory，并且将在AGP8.0中移除。</p>
+<p>开门见山，两者对比如下</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>AsmClassVisitorFactory（建议）</td>
+<td>1、性能提升 18%<br />2、代码量减少5倍，使用简单，做了大量封装</td>
+<td>1、因为高度封装，最新的版本由于扫描规则，会有一些jar包扫不到，进而无法处理，不过相信会优化<br />具体可以参考<a target="_blank" rel="noopener" href="https://juejin.cn/post/7190196880469393463">https://juejin.cn/post/7190196880469393463</a></td>
+</tr>
+<tr>
+<td>Transform Action</td>
+<td>1、可操作类较多，可以定制遍历规则，当前覆盖较全</td>
+<td>1、实现复杂</td>
+</tr>
+</tbody></table>
+<h3 id="2、Transform-Action-方案描述-（选读）（AGP-lt-7-0）"><a href="#2、Transform-Action-方案描述-（选读）（AGP-lt-7-0）" class="headerlink" title="2、Transform Action 方案描述 （选读）（AGP &lt; 7.0）"></a>2、Transform Action 方案描述 （选读）（AGP &lt; 7.0）</h3><h4 id="1）介绍"><a href="#1）介绍" class="headerlink" title="1）介绍"></a>1）介绍</h4><p>Transform API是由AGP提供的，而Transform Action则是由Gradle提供。不光是 AGP 需要 Transform，Java 也需要，所以由 Gradle 来提供统一的 Transform API 也合情合理。</p>
+<h4 id="2）原理："><a href="#2）原理：" class="headerlink" title="2）原理："></a>2）原理：</h4><p>为了更好的理解，因为AsmClassVisitor是transform的高度封装，这里详细介绍下原理</p>
+<p>【插桩过程】</p>
+<img src="https://p.ipic.vip/im3cva.png" alt="image-20231101153717441" style="zoom: 33%;" />
+
+<p>【ASM架构】</p>
+<img src="https://p.ipic.vip/lagi6n.jpg" alt="img" style="zoom:39%;" />
+
+
+
+<p>核心API解释：</p>
+<ul>
+<li>ClassVisitor（抽象类）：ClassReader 对象创建之后，调用 ClassReader#accept() 方法，传入一个 ClassVisitor 对象。在 ClassReader 中遍历树结构的不同节点时会调用 ClassVisitor 对象中不同的 visit() 方法，从而实现对字节码的修改。在 ClassVisitor 中的一些访问会产生子过程，比如 visitMethod 会产生 MethodVisitor 的调用，visitField 会产生对 FieldVisitor 的调用，用户可以对这些 Visitor 进行自己的实现，从而达到对这些子节点的字节码的访问和修改。</li>
+<li>ASM Core API可以类比解析XML文件中的SAX方式，不需要把这个类的整个结构读取进来，就可以用流式的方法来处理字节码文件。好处是非常节约内存，但是编程难度较大。然而出于性能考虑，一般情况下编程都使用Core API。在Core API中有以下几个关键类：</li>
+<li>ClassReader：它将字节数组或者 class 文件读入到内存当中，并以树的数据结构表示，树中的一个节点代表着 class 文件中的某个区域。可以将 ClassReader 看作是 Visitor 模式中的访问者的实现类。</li>
+<li>ClassWriter：ClassVisitor 的实现类，它是生成字节码的工具类，它一般是责任链中的最后一个节点，其之前的每一个 ClassVisitor 都是致力于对原始字节码做修改，而 ClassWriter 的操作则是把每一个节点修改后的字节码输出为字节数组。</li>
+<li>ASM Tree API可以类比解析XML文件中的DOM方式，把整个类的结构读取到内存中，缺点是消耗内存多，但是编程比较简单。TreeApi不同于CoreAPI，TreeAPI通过各种Node类来映射字节码的各个区域，类比DOM节点，就可以很好地理解这种编程方式。</li>
+</ul>
+<p>【ASM Tree API介绍】</p>
+<img src="https://p.ipic.vip/0niaez.jpg" alt="img" style="zoom:50%;" />
+
+<p>getName()  用于指定 Transform 的名字，对应了该 Transform 所代表的 Task 的名称</p>
+<p>getInputTypes()  用于指定 Transform 的输入类型，可以作为输入过滤的一种手段</p>
+<p>getScopes()  用于指定 Transform 的作用域 </p>
+<p>transform() 真正修改字节码的方法</p>
+<p>getInputTypes()，getScopes()，这个要多说几句，对于上面的transform图，只是展示Transform的其中一种情况。而Transform其实可以有两种输入，一种是消费型的，当前Transform需要将消费型型输出给下一个Transform，另一种是引用型的，当前Transform可以读取这些输入，而不需要输出给下一个Transform，比如Instant Run就是通过这种方式，检查两次编译之间的diff的。而Scope和contentType是transform输入的两种过滤机制，如下</p>
+<img src="https://p.ipic.vip/dpw64i.jpg" alt="img" style="zoom:67%;" />
+
+
+
+<p>ContentType，顾名思义，就是数据类型，在插件开发中，我们一般只能使用CLASSES和RESOURCES两种类型，注意，其中的CLASSES已经包含了class文件和jar文件。 ContentType与Scope是两个维度</p>
+<p>【插桩过程】</p>
+<p>当已经遍历到class时，可以通过如下的流程，进行ASM Hook</p>
+<img src="https://p.ipic.vip/hkfl82.png" alt="image-20231031194718832" style="zoom:66%;" />
+
+
+
+
+
+<h3 id="1、AsmClassVisitorFactory-（AGP-gt-x3D-7-0）"><a href="#1、AsmClassVisitorFactory-（AGP-gt-x3D-7-0）" class="headerlink" title="1、AsmClassVisitorFactory （AGP &gt;&#x3D; 7.0）"></a>1、AsmClassVisitorFactory （AGP &gt;&#x3D; 7.0）</h3><h4 id="1）介绍-1"><a href="#1）介绍-1" class="headerlink" title="1）介绍"></a>1）介绍</h4><p>AGP很贴心的为我们又做了一层封装，提供了AsmClassVisitorFactory来方便我们使用Transform Action进行ASM操作。</p>
+<h4 id="2）原理"><a href="#2）原理" class="headerlink" title="2）原理"></a>2）原理</h4><p>在进入Gradle7.0 后，基于Gradle7.0 自定义的 <code>Plugin</code> 插件，处理 <code>Asm</code> 的代码插桩是非常简单的事情。<strong>我们只要关心查找和插桩代码就行了，</strong>把要修改的类找出来，在类对应的方法中 插入业务代码。因此会省去很多原理和逻辑的解释。</p>
+<p>【插桩过程】相比transform api，AsmClassVisitorFactory只需要关注对class的操作即可，不必关注transform，文件夹，jar包的扫描，解压，copy等过程，以及增量编译，极大简化了学习成本。</p>
+<img src="https://p.ipic.vip/bl9h0f.png" alt="image-20231101154918954" style="zoom: 50%;" />
+
+<h4 id="3）使用示例"><a href="#3）使用示例" class="headerlink" title="3）使用示例"></a>3）使用示例</h4><p>【Demo演示】先介绍简单的使用方法举例：示例代码</p>
+<img src="https://p.ipic.vip/qq20v0.jpg" alt="image.png" style="zoom:67%;" />
+
+<p>【方案步骤】</p>
+<p>第一步：定义一个插件，这个在《ASM 准备知识》讲过，就不再阐述</p>
+<p>第二步： 处理 DemoPlugin</p>
+<img src="https://p.ipic.vip/168ga9.jpg" alt="image.png" style="zoom: 50%;" />
+
+<p>插件要对应的在 <code>com.android.application</code> 中添加</p>
+<p>调用 <code>variant.instrumentation</code> 的  <code>transformClassesWith</code> 方法添加我们处理class 的 <code>Factory</code></p>
+<p>设置 <code>setAsmFramesComputationMode</code>  模式</p>
+<p>第三步 AsmClassVisitorFactory</p>
+<img src="https://p.ipic.vip/wswkib.jpg" alt="image.png" style="zoom:67%;" />
+
+<ul>
+<li>在 <code>AsmClassVisitorFactory</code> 的 <code>isInstrumentable</code> 方法中，所有class 类都会在这里被扫描到，依据这个，我们可以过滤出对应的 class ,添加到集合里面，返回 true ,即表示要进行代码手术了。</li>
+<li><code>createClassVisitor</code> 是 <code>isInstrumentable</code> 方法之后被调用的，在这里进行代码手术，可以自定义一个 <code>ModuleClassVisitor</code> 继承 <code>ClassVisitor</code></li>
+</ul>
+<img src="https://p.ipic.vip/qak3kq.jpg" alt="image.png" style="zoom:67%;" />
+
+<ul>
+<li>在 <code>visitCode</code> 方法中， class 类会在这里处理，也是手术的关键。这里 asm 的使用细节暂不多说。</li>
+</ul>
+<img src="https://p.ipic.vip/clphzk.jpg" alt="image.png" style="zoom:67%;" />
+
+
+
+
+
+<h2 id="三、实战"><a href="#三、实战" class="headerlink" title="三、实战"></a>三、实战</h2><p>按照实战的思路，从三个步骤入手</p>
+<ul>
+<li>我该用什么API操作类</li>
+<li>我该在哪插入代码</li>
+<li>我该如何插入代码</li>
+<li>我该如何加速编写代码</li>
+</ul>
+<h3 id="1、我该用什么API操作类：API的选择"><a href="#1、我该用什么API操作类：API的选择" class="headerlink" title="1、我该用什么API操作类：API的选择"></a>1、我该用什么API操作类：API的选择</h3><ul>
+<li><p>AdviceAdapter</p>
+<p>对于AdviceAdapter类来说，能够很容易的实现在“方法进入”和“方法退出”时添加代码。AdviceAdapter类的特点：引入了onMethodEnter()方法和onMethodExit()方法。</p>
+</li>
+<li><p>GeneratorAdapter</p>
+<p>对于GeneratorAdapter类来说，它非常重要的一个特点：将一些visitXxxInsn()方法封装成一些常用的方法。</p>
+</li>
+<li><p>LocalVariablesSorter</p>
+<p>对于LocalVariablesSorter类来说，它的特点是“可以引入新的局部变量，并且能够对局部变量重新排序”。</p>
+</li>
+<li><p>MethodVisitor</p>
+<p>操作方法的抽象类</p>
+</li>
+</ul>
+<p>其继承关系如下</p>
+<img src="/Users/cao884203/Library/Application Support/typora-user-images/image-20231101194538898.png" alt="image-20231101194538898" style="zoom:50%;" />
+
+<h3 id="2、我该在哪插入代码：生命周期了解"><a href="#2、我该在哪插入代码：生命周期了解" class="headerlink" title="2、我该在哪插入代码：生命周期了解"></a>2、我该在哪插入代码：生命周期了解</h3><p><img src="https://p.ipic.vip/k1g7m8.jpg" alt="img"></p>
+<p><strong>用的比较多的是</strong></p>
+<ul>
+<li>visit</li>
+<li>visitField</li>
+<li>visitMethod</li>
+<li>visitEnd</li>
+</ul>
+<p>遍历生命周期顺序是</p>
+<p><strong>visitInvokeDynamicInsn -&gt;  visitCode -&gt; visitInsn -&gt; visitEnd</strong> </p>
+<h3 id="3、我该如何插入代码：插入一个log试试"><a href="#3、我该如何插入代码：插入一个log试试" class="headerlink" title="3、我该如何插入代码：插入一个log试试"></a>3、我该如何插入代码：插入一个log试试</h3><p>先查看一个简单方法介绍，假如我们要向testMethod 插入一个<code> Log.i(&quot;testMethod&quot;,&quot;testMethod in&quot;)</code>方法</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> fun <span class="title function_">testMethod</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="comment">//Log.i(&quot;testMethod&quot;,&quot;Hello ASM&quot;)</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果该方法为字节码，应该是</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">  <span class="comment">// access flags 0x12</span></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> <span class="title function_">testMethod</span><span class="params">()</span>V</span><br><span class="line">    LDC <span class="string">&quot;TAG&quot;</span></span><br><span class="line">    LDC <span class="string">&quot;testMethod in&quot;</span></span><br><span class="line">    INVOKESTATIC android/util/Log.i (Ljava/lang/String;Ljava/lang/String;)I</span><br><span class="line">    POP</span><br><span class="line">    <span class="type">RETURN</span></span><br><span class="line">    <span class="variable">MAXSTACK</span> <span class="operator">=</span> <span class="number">2</span></span><br><span class="line">    MAXLOCALS = <span class="number">1</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>那么ASM Hook就要写如下代码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">methodVisitor.visitLdcInsn(<span class="string">&quot;TAG&quot;</span>);</span><br><span class="line">methodVisitor.visitLdcInsn(<span class="string">&quot;Hello ASM&quot;</span>);</span><br><span class="line">methodVisitor.visitMethodInsn(INVOKESTATIC, <span class="string">&quot;android/util/Log&quot;</span>, <span class="string">&quot;i&quot;</span>, <span class="string">&quot;(Ljava/lang/String;Ljava/lang/String;)I&quot;</span>, <span class="literal">false</span>);</span><br><span class="line">methodVisitor.visitInsn(POP);</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>加载常量”tag”入栈</li>
+<li>加载常量”Hello ASM”入栈</li>
+<li>执行Log的静态方法d (INVOKESTATIC 是静态的opcode)</li>
+<li>方法调用出栈</li>
+</ul>
+<h3 id="4、我该如何加速编写代码：常用参数助记与工具"><a href="#4、我该如何加速编写代码：常用参数助记与工具" class="headerlink" title="4、我该如何加速编写代码：常用参数助记与工具"></a>4、我该如何加速编写代码：常用参数助记与工具</h3><h4 id="1）常用参数"><a href="#1）常用参数" class="headerlink" title="1）常用参数"></a>1）常用参数</h4><p><strong>opcode常用</strong></p>
+<p><img src="https://p.ipic.vip/a51lgs.png" alt="image-20230726210217712"></p>
+<p><img src="https://s2.51cto.com/images/20210821/1629535019505703.png?x-oss-process=image/watermark,size_14,text_QDUxQ1RP5Y2a5a6i,color_FFFFFF,t_30,g_se,x_10,y_10,shadow_20,type_ZmFuZ3poZW5naGVpdGk=/format,webp/resize,m_fixed,w_1184" alt="Java ASM系列：（056）opcode: method_ASM"></p>
+<p><em><strong>这里还有几个比较常用的方法，可以记忆下</strong></em></p>
+<ul>
+<li><p>visitLdcInsn 常量入栈</p>
+</li>
+<li><p>visitVarInsn 局部变量入栈</p>
+</li>
+<li><p>accept(class visitor)</p>
+</li>
+<li><p>LSTORE 命令字 栈顶long数值存入第1局部变量</p>
+</li>
+<li><p>DUP 使用 用于赋值栈顶的指定个数的数值，并将其压入栈顶指定次数；</p>
+</li>
+<li><p>LSUB 使用 运算指令</p>
+</li>
+<li><p>POP 使用：栈顶数值出栈(不能是long&#x2F;double)</p>
+</li>
+<li><p>visitCode是方法的访问开始；</p>
+</li>
+<li><p>visitInsn可以访问方法的操作指令，一般应用于在return指令之前插入代码；</p>
+</li>
+<li><p>vistiMax则用于复写操作数栈和局部变量表的大小，因为类被修改，所以所需的栈和变量表大小可能会增加</p>
+</li>
+</ul>
+<p>比如：在插入&#x2F;Log.i(“testMethod”,”Hello ASM”) 之前</p>
+<p><img src="https://p.ipic.vip/9xw8qn.png" alt="image-20231101195352022"></p>
+<p>插入之后</p>
+<p><img src="https://p.ipic.vip/phk7qf.png" alt="image-20231101195412558"></p>
+<p>可以参考java指令集</p>
+<p><a target="_blank" rel="noopener" href="https://gityuan.com/2015/10/24/jvm-bytecode-grammar/">https://gityuan.com/2015/10/24/jvm-bytecode-grammar/</a></p>
+<h4 id="2）工具"><a href="#2）工具" class="headerlink" title="2）工具"></a>2）工具</h4><p>工具可以大大提高编写效率，如果是Android Studio，这里强烈推荐ASM Bytecode Viewer</p>
+<p><img src="https://p.ipic.vip/o3737z.png" alt="image-20231101193608291"></p>
+<p>在你不知道如何该写ASM字节码的时候，你可以写Java或者KT code，用它来参考生成字节码</p>
+<p><img src="https://p.ipic.vip/xo739b.png" alt="image-20231101193709051"></p>
+<h3 id=""><a href="#" class="headerlink" title=""></a></h3><h2 id="四、全文总结"><a href="#四、全文总结" class="headerlink" title="四、全文总结"></a>四、全文总结</h2><p>本文介绍了：ASM 框架的选择、AsmClassVisitorFactory的使用</p>
+<p>接下来从实战层面介绍了：</p>
+<ul>
+<li>我该用什么API操作类</li>
+<li>我该在哪插入代码</li>
+<li>我该如何插入代码</li>
+<li>我该如何加速编写代码</li>
+</ul>
+<p>后续的文章会介绍对于一些语法糖Hook不到情况的进阶hook</p>
+<p>参考：</p>
+<p><a target="_blank" rel="noopener" href="https://gityuan.com/2015/10/24/jvm-bytecode-grammar/">https://gityuan.com/2015/10/24/jvm-bytecode-grammar/</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16163480/6511302">https://blog.51cto.com/u_16163480/6511302</a></p>
+<p><a target="_blank" rel="noopener" href="https://juejin.cn/post/7190196880469393463">https://juejin.cn/post/7190196880469393463</a></p>
+<p><a target="_blank" rel="noopener" href="https://juejin.cn/post/7207713058855469115">https://juejin.cn/post/7207713058855469115</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.51cto.com/lsieun/2924583">https://blog.51cto.com/lsieun/2924583</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2023/08/23/%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A52%20-%20-%20ASM%20Transform%E5%AE%9E%E6%88%98/" data-id="clofq96hb000121epfr8ed8iw" data-title="" class="article-share-link">分享</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2023/09/14/%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A51%20-%20ASM%20%E5%87%86%E5%A4%87%E7%9F%A5%E8%AF%86/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">前一篇</strong>
+      <div class="article-nav-title">
+        
+          (no title)
+        
+      </div>
+    </a>
+  
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/09/">九月 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/08/">八月 2023</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/09/14/%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A51%20-%20ASM%20%E5%87%86%E5%A4%87%E7%9F%A5%E8%AF%86/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2023/08/23/%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A52%20-%20-%20ASM%20Transform%E5%AE%9E%E6%88%98/">(no title)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 christiecui<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
