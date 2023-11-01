@@ -20,12 +20,12 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="从零单学跨平台无埋点上报2 - ASM Transform实战一、Previous Review字节码增强的原理就是通过Transform将class文件，通过Gradle Task进行流水线读取与处理，并写回下一个Transform中   因此本文将分析进行class的改写与实战，根据下图  二、核心API选择1、 前言：Transform API 是 AGP1.5 就引入的特性，主要用于在 A">
+  <meta name="description" content="从零单学跨平台无埋点上报2-ASM Transform实战一、Previous Review字节码增强的原理就是通过Transform将class文件，通过Gradle Task进行流水线读取与处理，并写回下一个Transform中   因此本文将分析进行class的改写与实战，根据下图  二、核心API选择1、 前言：Transform API 是 AGP1.5 就引入的特性，主要用于在 And">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Christiecui的博客">
-<meta property="og:url" content="http://example.com/2023/08/23/1/index.html">
+<meta property="og:title" content="从零单学跨平台无埋点上报2-ASM Transform实战">
+<meta property="og:url" content="http://example.com/2023/08/23/%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A52-ASM%20Transform%E5%AE%9E%E6%88%98/index.html">
 <meta property="og:site_name" content="Christiecui的博客">
-<meta property="og:description" content="从零单学跨平台无埋点上报2 - ASM Transform实战一、Previous Review字节码增强的原理就是通过Transform将class文件，通过Gradle Task进行流水线读取与处理，并写回下一个Transform中   因此本文将分析进行class的改写与实战，根据下图  二、核心API选择1、 前言：Transform API 是 AGP1.5 就引入的特性，主要用于在 A">
+<meta property="og:description" content="从零单学跨平台无埋点上报2-ASM Transform实战一、Previous Review字节码增强的原理就是通过Transform将class文件，通过Gradle Task进行流水线读取与处理，并写回下一个Transform中   因此本文将分析进行class的改写与实战，根据下图  二、核心API选择1、 前言：Transform API 是 AGP1.5 就引入的特性，主要用于在 And">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://p.ipic.vip/npbw4v.png">
 <meta property="og:image" content="https://p.ipic.vip/zn69jc.png">
@@ -49,12 +49,12 @@
 <meta property="og:image" content="https://p.ipic.vip/o3737z.png">
 <meta property="og:image" content="https://p.ipic.vip/xo739b.png">
 <meta property="article:published_time" content="2023-08-23T03:36:53.897Z">
-<meta property="article:modified_time" content="2023-11-01T12:23:31.039Z">
+<meta property="article:modified_time" content="2023-11-01T13:59:32.762Z">
 <meta property="article:author" content="christiecui">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://p.ipic.vip/npbw4v.png">
 
-<link rel="canonical" href="http://example.com/2023/08/23/1/">
+<link rel="canonical" href="http://example.com/2023/08/23/%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A52-ASM%20Transform%E5%AE%9E%E6%88%98/">
 
 
 <script id="page-configurations">
@@ -67,7 +67,7 @@
   };
 </script>
 
-  <title> | Christiecui的博客</title>
+  <title>从零单学跨平台无埋点上报2-ASM Transform实战 | Christiecui的博客</title>
   
 
 
@@ -172,7 +172,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/08/23/1/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/08/23/%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A52-ASM%20Transform%E5%AE%9E%E6%88%98/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -185,7 +185,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          
+          从零单学跨平台无埋点上报2-ASM Transform实战
         </h1>
 
         <div class="post-meta">
@@ -202,7 +202,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2023-11-01 20:23:31" itemprop="dateModified" datetime="2023-11-01T20:23:31+08:00">2023-11-01</time>
+                <time title="修改时间：2023-11-01 21:59:32" itemprop="dateModified" datetime="2023-11-01T21:59:32+08:00">2023-11-01</time>
               </span>
 
           
@@ -216,7 +216,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h1 id="从零单学跨平台无埋点上报2-ASM-Transform实战"><a href="#从零单学跨平台无埋点上报2-ASM-Transform实战" class="headerlink" title="从零单学跨平台无埋点上报2 - ASM Transform实战"></a>从零单学跨平台无埋点上报2 - ASM Transform实战</h1><h2 id="一、Previous-Review"><a href="#一、Previous-Review" class="headerlink" title="一、Previous Review"></a>一、Previous Review</h2><p>字节码增强的原理就是通过Transform将class文件，通过Gradle Task进行流水线读取与处理，并写回下一个Transform中</p>
+        <h1 id="从零单学跨平台无埋点上报2-ASM-Transform实战"><a href="#从零单学跨平台无埋点上报2-ASM-Transform实战" class="headerlink" title="从零单学跨平台无埋点上报2-ASM Transform实战"></a>从零单学跨平台无埋点上报2-ASM Transform实战</h1><h2 id="一、Previous-Review"><a href="#一、Previous-Review" class="headerlink" title="一、Previous Review"></a>一、Previous Review</h2><p>字节码增强的原理就是通过Transform将class文件，通过Gradle Task进行流水线读取与处理，并写回下一个Transform中</p>
 <img src="https://p.ipic.vip/npbw4v.png" alt="image-20230705105542384" style="zoom: 20%;" />
 
 <p>因此本文将分析进行class的改写与实战，根据下图</p>
@@ -432,8 +432,8 @@
     <div class="post-nav">
       <div class="post-nav-item"></div>
       <div class="post-nav-item">
-    <a href="/2023/09/14/%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A51%20-%20ASM%20%E5%87%86%E5%A4%87%E7%9F%A5%E8%AF%86/" rel="next" title="">
-       <i class="fa fa-chevron-right"></i>
+    <a href="/2023/11/01/%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A51-ASM%20%E5%87%86%E5%A4%87%E7%9F%A5%E8%AF%86/" rel="next" title="从零单学跨平台无埋点上报1-ASM 准备知识">
+      从零单学跨平台无埋点上报1-ASM 准备知识 <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
       </footer>
@@ -493,7 +493,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A52-ASM-Transform%E5%AE%9E%E6%88%98"><span class="nav-number">1.</span> <span class="nav-text">从零单学跨平台无埋点上报2 - ASM Transform实战</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81Previous-Review"><span class="nav-number">1.1.</span> <span class="nav-text">一、Previous Review</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E6%A0%B8%E5%BF%83API%E9%80%89%E6%8B%A9"><span class="nav-number">1.2.</span> <span class="nav-text">二、核心API选择</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81-%E5%89%8D%E8%A8%80%EF%BC%9A"><span class="nav-number">1.2.1.</span> <span class="nav-text">1、 前言：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%E3%80%81Transform-Action-%E6%96%B9%E6%A1%88%E6%8F%8F%E8%BF%B0-%EF%BC%88%E9%80%89%E8%AF%BB%EF%BC%89%EF%BC%88AGP-lt-7-0%EF%BC%89"><span class="nav-number">1.2.2.</span> <span class="nav-text">2、Transform Action 方案描述 （选读）（AGP &lt; 7.0）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1%EF%BC%89%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.2.2.1.</span> <span class="nav-text">1）介绍</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2%EF%BC%89%E5%8E%9F%E7%90%86%EF%BC%9A"><span class="nav-number">1.2.2.2.</span> <span class="nav-text">2）原理：</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81AsmClassVisitorFactory-%EF%BC%88AGP-gt-x3D-7-0%EF%BC%89"><span class="nav-number">1.2.3.</span> <span class="nav-text">1、AsmClassVisitorFactory （AGP &gt;&#x3D; 7.0）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1%EF%BC%89%E4%BB%8B%E7%BB%8D-1"><span class="nav-number">1.2.3.1.</span> <span class="nav-text">1）介绍</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2%EF%BC%89%E5%8E%9F%E7%90%86"><span class="nav-number">1.2.3.2.</span> <span class="nav-text">2）原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3%EF%BC%89%E4%BD%BF%E7%94%A8%E7%A4%BA%E4%BE%8B"><span class="nav-number">1.2.3.3.</span> <span class="nav-text">3）使用示例</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%AE%9E%E6%88%98"><span class="nav-number">1.3.</span> <span class="nav-text">三、实战</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81%E6%88%91%E8%AF%A5%E7%94%A8%E4%BB%80%E4%B9%88API%E6%93%8D%E4%BD%9C%E7%B1%BB%EF%BC%9AAPI%E7%9A%84%E9%80%89%E6%8B%A9"><span class="nav-number">1.3.1.</span> <span class="nav-text">1、我该用什么API操作类：API的选择</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%E3%80%81%E6%88%91%E8%AF%A5%E5%9C%A8%E5%93%AA%E6%8F%92%E5%85%A5%E4%BB%A3%E7%A0%81%EF%BC%9A%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%BA%86%E8%A7%A3"><span class="nav-number">1.3.2.</span> <span class="nav-text">2、我该在哪插入代码：生命周期了解</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3%E3%80%81%E6%88%91%E8%AF%A5%E5%A6%82%E4%BD%95%E6%8F%92%E5%85%A5%E4%BB%A3%E7%A0%81%EF%BC%9A%E6%8F%92%E5%85%A5%E4%B8%80%E4%B8%AAlog%E8%AF%95%E8%AF%95"><span class="nav-number">1.3.3.</span> <span class="nav-text">3、我该如何插入代码：插入一个log试试</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4%E3%80%81%E6%88%91%E8%AF%A5%E5%A6%82%E4%BD%95%E5%8A%A0%E9%80%9F%E7%BC%96%E5%86%99%E4%BB%A3%E7%A0%81%EF%BC%9A%E5%B8%B8%E7%94%A8%E5%8F%82%E6%95%B0%E5%8A%A9%E8%AE%B0%E4%B8%8E%E5%B7%A5%E5%85%B7"><span class="nav-number">1.3.4.</span> <span class="nav-text">4、我该如何加速编写代码：常用参数助记与工具</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1%EF%BC%89%E5%B8%B8%E7%94%A8%E5%8F%82%E6%95%B0"><span class="nav-number">1.3.4.1.</span> <span class="nav-text">1）常用参数</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2%EF%BC%89%E5%B7%A5%E5%85%B7"><span class="nav-number">1.3.4.2.</span> <span class="nav-text">2）工具</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link"><span class="nav-number">1.3.5.</span> <span class="nav-text"></span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E5%85%A8%E6%96%87%E6%80%BB%E7%BB%93"><span class="nav-number">1.4.</span> <span class="nav-text">四、全文总结</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A52-ASM-Transform%E5%AE%9E%E6%88%98"><span class="nav-number">1.</span> <span class="nav-text">从零单学跨平台无埋点上报2-ASM Transform实战</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81Previous-Review"><span class="nav-number">1.1.</span> <span class="nav-text">一、Previous Review</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E6%A0%B8%E5%BF%83API%E9%80%89%E6%8B%A9"><span class="nav-number">1.2.</span> <span class="nav-text">二、核心API选择</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81-%E5%89%8D%E8%A8%80%EF%BC%9A"><span class="nav-number">1.2.1.</span> <span class="nav-text">1、 前言：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%E3%80%81Transform-Action-%E6%96%B9%E6%A1%88%E6%8F%8F%E8%BF%B0-%EF%BC%88%E9%80%89%E8%AF%BB%EF%BC%89%EF%BC%88AGP-lt-7-0%EF%BC%89"><span class="nav-number">1.2.2.</span> <span class="nav-text">2、Transform Action 方案描述 （选读）（AGP &lt; 7.0）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1%EF%BC%89%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.2.2.1.</span> <span class="nav-text">1）介绍</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2%EF%BC%89%E5%8E%9F%E7%90%86%EF%BC%9A"><span class="nav-number">1.2.2.2.</span> <span class="nav-text">2）原理：</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81AsmClassVisitorFactory-%EF%BC%88AGP-gt-x3D-7-0%EF%BC%89"><span class="nav-number">1.2.3.</span> <span class="nav-text">1、AsmClassVisitorFactory （AGP &gt;&#x3D; 7.0）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1%EF%BC%89%E4%BB%8B%E7%BB%8D-1"><span class="nav-number">1.2.3.1.</span> <span class="nav-text">1）介绍</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2%EF%BC%89%E5%8E%9F%E7%90%86"><span class="nav-number">1.2.3.2.</span> <span class="nav-text">2）原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3%EF%BC%89%E4%BD%BF%E7%94%A8%E7%A4%BA%E4%BE%8B"><span class="nav-number">1.2.3.3.</span> <span class="nav-text">3）使用示例</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%AE%9E%E6%88%98"><span class="nav-number">1.3.</span> <span class="nav-text">三、实战</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81%E6%88%91%E8%AF%A5%E7%94%A8%E4%BB%80%E4%B9%88API%E6%93%8D%E4%BD%9C%E7%B1%BB%EF%BC%9AAPI%E7%9A%84%E9%80%89%E6%8B%A9"><span class="nav-number">1.3.1.</span> <span class="nav-text">1、我该用什么API操作类：API的选择</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%E3%80%81%E6%88%91%E8%AF%A5%E5%9C%A8%E5%93%AA%E6%8F%92%E5%85%A5%E4%BB%A3%E7%A0%81%EF%BC%9A%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%BA%86%E8%A7%A3"><span class="nav-number">1.3.2.</span> <span class="nav-text">2、我该在哪插入代码：生命周期了解</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3%E3%80%81%E6%88%91%E8%AF%A5%E5%A6%82%E4%BD%95%E6%8F%92%E5%85%A5%E4%BB%A3%E7%A0%81%EF%BC%9A%E6%8F%92%E5%85%A5%E4%B8%80%E4%B8%AAlog%E8%AF%95%E8%AF%95"><span class="nav-number">1.3.3.</span> <span class="nav-text">3、我该如何插入代码：插入一个log试试</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4%E3%80%81%E6%88%91%E8%AF%A5%E5%A6%82%E4%BD%95%E5%8A%A0%E9%80%9F%E7%BC%96%E5%86%99%E4%BB%A3%E7%A0%81%EF%BC%9A%E5%B8%B8%E7%94%A8%E5%8F%82%E6%95%B0%E5%8A%A9%E8%AE%B0%E4%B8%8E%E5%B7%A5%E5%85%B7"><span class="nav-number">1.3.4.</span> <span class="nav-text">4、我该如何加速编写代码：常用参数助记与工具</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1%EF%BC%89%E5%B8%B8%E7%94%A8%E5%8F%82%E6%95%B0"><span class="nav-number">1.3.4.1.</span> <span class="nav-text">1）常用参数</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2%EF%BC%89%E5%B7%A5%E5%85%B7"><span class="nav-number">1.3.4.2.</span> <span class="nav-text">2）工具</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link"><span class="nav-number">1.3.5.</span> <span class="nav-text"></span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E5%85%A8%E6%96%87%E6%80%BB%E7%BB%93"><span class="nav-number">1.4.</span> <span class="nav-text">四、全文总结</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
