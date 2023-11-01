@@ -6,12 +6,12 @@
   
   <title>Christiecui的博客</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="description" content="一、Previous Review字节码增强的原理就是通过Transform将class文件，通过Gradle Task进行流水线读取与处理，并写回下一个Transform中   因此本文将分析进行class的改写与实战，根据下图  二、核心API选择1、 前言：Transform API 是 AGP1.5 就引入的特性，主要用于在 Android 构建过程中，在 Class转Dex的过程中修改">
+  <meta name="description" content="从零单学跨平台无埋点上报2 - ASM Transform实战一、Previous Review字节码增强的原理就是通过Transform将class文件，通过Gradle Task进行流水线读取与处理，并写回下一个Transform中   因此本文将分析进行class的改写与实战，根据下图  二、核心API选择1、 前言：Transform API 是 AGP1.5 就引入的特性，主要用于在 A">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Christiecui的博客">
 <meta property="og:url" content="http://example.com/2023/08/23/%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A52%20-%20ASM%20Transform%E5%AE%9E%E6%88%98/index.html">
 <meta property="og:site_name" content="Christiecui的博客">
-<meta property="og:description" content="一、Previous Review字节码增强的原理就是通过Transform将class文件，通过Gradle Task进行流水线读取与处理，并写回下一个Transform中   因此本文将分析进行class的改写与实战，根据下图  二、核心API选择1、 前言：Transform API 是 AGP1.5 就引入的特性，主要用于在 Android 构建过程中，在 Class转Dex的过程中修改">
+<meta property="og:description" content="从零单学跨平台无埋点上报2 - ASM Transform实战一、Previous Review字节码增强的原理就是通过Transform将class文件，通过Gradle Task进行流水线读取与处理，并写回下一个Transform中   因此本文将分析进行class的改写与实战，根据下图  二、核心API选择1、 前言：Transform API 是 AGP1.5 就引入的特性，主要用于在 A">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://p.ipic.vip/npbw4v.png">
 <meta property="og:image" content="https://p.ipic.vip/zn69jc.png">
@@ -35,7 +35,7 @@
 <meta property="og:image" content="https://p.ipic.vip/o3737z.png">
 <meta property="og:image" content="https://p.ipic.vip/xo739b.png">
 <meta property="article:published_time" content="2023-08-23T03:36:53.897Z">
-<meta property="article:modified_time" content="2023-11-01T12:20:12.347Z">
+<meta property="article:modified_time" content="2023-11-01T12:23:31.039Z">
 <meta property="article:author" content="christiecui">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://p.ipic.vip/npbw4v.png">
@@ -107,7 +107,7 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        <h2 id="一、Previous-Review"><a href="#一、Previous-Review" class="headerlink" title="一、Previous Review"></a>一、Previous Review</h2><p>字节码增强的原理就是通过Transform将class文件，通过Gradle Task进行流水线读取与处理，并写回下一个Transform中</p>
+        <h1 id="从零单学跨平台无埋点上报2-ASM-Transform实战"><a href="#从零单学跨平台无埋点上报2-ASM-Transform实战" class="headerlink" title="从零单学跨平台无埋点上报2 - ASM Transform实战"></a>从零单学跨平台无埋点上报2 - ASM Transform实战</h1><h2 id="一、Previous-Review"><a href="#一、Previous-Review" class="headerlink" title="一、Previous Review"></a>一、Previous Review</h2><p>字节码增强的原理就是通过Transform将class文件，通过Gradle Task进行流水线读取与处理，并写回下一个Transform中</p>
 <img src="https://p.ipic.vip/npbw4v.png" alt="image-20230705105542384" style="zoom: 20%;" />
 
 <p>因此本文将分析进行class的改写与实战，根据下图</p>
