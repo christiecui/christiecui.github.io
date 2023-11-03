@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="从零单学跨平台无埋点上报3-ASM 对lambda语法糖的hook一、Previous Review上篇我们站在实战的角度，讲述了无埋点插桩方法的方式 123private fun testMethod() &amp;#123;  &#x2F;&#x2F;Log.i(&quot;testMethod&quot;,&quot;Hello ASM&quot;)&amp;#125;  但此时遇到了难题，对于一个基本的onclick事件的上">
+<meta property="og:type" content="article">
+<meta property="og:title" content="从零单学跨平台无埋点上报3-ASM对lambda语法糖的hook">
+<meta property="og:url" content="http://example.com/2023/11/02/%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A53-ASM%20%E5%AF%B9lambda%E8%AF%AD%E6%B3%95%E7%B3%96%E7%9A%84hook/index.html">
+<meta property="og:site_name" content="Christiecui的博客">
+<meta property="og:description" content="从零单学跨平台无埋点上报3-ASM 对lambda语法糖的hook一、Previous Review上篇我们站在实战的角度，讲述了无埋点插桩方法的方式 123private fun testMethod() &amp;#123;  &#x2F;&#x2F;Log.i(&quot;testMethod&quot;,&quot;Hello ASM&quot;)&amp;#125;  但此时遇到了难题，对于一个基本的onclick事件的上">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://pic2.zhimg.com/80/v2-7dcd2746c77ef5b6a7a5a8a6ae44c78d_1440w.webp">
+<meta property="og:image" content="https://p.ipic.vip/uimv4x.png">
+<meta property="og:image" content="https://p.ipic.vip/qmv76f.png">
+<meta property="og:image" content="https://p.ipic.vip/kkjrdy.jpg">
+<meta property="article:published_time" content="2023-11-02T07:18:15.111Z">
+<meta property="article:modified_time" content="2023-11-03T08:56:21.626Z">
+<meta property="article:author" content="christiecui">
+<meta property="article:tag" content="ASM">
+<meta property="article:tag" content="无埋点">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://pic2.zhimg.com/80/v2-7dcd2746c77ef5b6a7a5a8a6ae44c78d_1440w.webp">
+
+<link rel="canonical" href="http://example.com/2023/11/02/%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A53-ASM%20%E5%AF%B9lambda%E8%AF%AD%E6%B3%95%E7%B3%96%E7%9A%84hook/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>从零单学跨平台无埋点上报3-ASM对lambda语法糖的hook | Christiecui的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Christiecui的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/11/02/%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A53-ASM%20%E5%AF%B9lambda%E8%AF%AD%E6%B3%95%E7%B3%96%E7%9A%84hook/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="christiecui">
+      <meta itemprop="description" content="终身学习">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Christiecui的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          从零单学跨平台无埋点上报3-ASM对lambda语法糖的hook
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-11-02 15:18:15" itemprop="dateCreated datePublished" datetime="2023-11-02T15:18:15+08:00">2023-11-02</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-11-03 16:56:21" itemprop="dateModified" datetime="2023-11-03T16:56:21+08:00">2023-11-03</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="从零单学跨平台无埋点上报3-ASM-对lambda语法糖的hook"><a href="#从零单学跨平台无埋点上报3-ASM-对lambda语法糖的hook" class="headerlink" title="从零单学跨平台无埋点上报3-ASM 对lambda语法糖的hook"></a>从零单学跨平台无埋点上报3-ASM 对lambda语法糖的hook</h1><h2 id="一、Previous-Review"><a href="#一、Previous-Review" class="headerlink" title="一、Previous Review"></a>一、Previous Review</h2><p>上篇我们站在实战的角度，讲述了无埋点插桩方法的方式</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> fun <span class="title function_">testMethod</span><span class="params">()</span> &#123;</span><br><span class="line">  <span class="comment">//Log.i(&quot;testMethod&quot;,&quot;Hello ASM&quot;)</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>但此时遇到了难题，对于一个基本的onclick事件的上报，如果没有方法名，我们该如何找到hook的点？</p>
+<h2 id="二、挑战：hook不到lambda"><a href="#二、挑战：hook不到lambda" class="headerlink" title="二、挑战：hook不到lambda"></a>二、挑战：hook不到lambda</h2><p>先来看看几种写法</p>
+<h3 id="内部类写法"><a href="#内部类写法" class="headerlink" title="内部类写法"></a>内部类写法</h3><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">view.<span class="title function_">setOnClickListener</span>(<span class="keyword">new</span> <span class="title class_">View</span>.<span class="title class_">OnClickListener</span>() &#123;</span><br><span class="line">    @<span class="title class_">Override</span></span><br><span class="line">    public <span class="keyword">void</span> <span class="title function_">onClick</span>(<span class="params">View v</span>) &#123;</span><br><span class="line">        <span class="comment">// do something</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>如上面这种常规的匿名内部类写法，实际编译的时候，会生成一个内部类，这个内部类里有</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MyClass$1</span> implements <span class="title class_">View</span>.<span class="property">OnClickListener</span>&#123;</span><br><span class="line">   @<span class="title class_">Override</span></span><br><span class="line">   public <span class="keyword">void</span> <span class="title function_">onClick</span>(<span class="params">View v</span>) &#123;</span><br><span class="line">   	<span class="comment">// do something</span></span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个时候通过插桩扫描，我们就可以通过如下判断是否命中：</p>
+<ul>
+<li>实现了<code>View.OnClickListener</code> 接口</li>
+<li>当前扫描的方法是 <code>onClick(View v)</code></li>
+</ul>
+<p>通过上面两个判断，就可以找到我们要插桩的方法，然后我们进行插桩就可以了</p>
+<p>但是实际应用的时候我们发现，除了上面常规的写法，还会遇到一些简写方式：</p>
+<h3 id="lambda表达式写法"><a href="#lambda表达式写法" class="headerlink" title="lambda表达式写法"></a>lambda表达式写法</h3><ul>
+<li><p>如常见的<code>lambda</code>表达式</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">view.setOnClickListener&#123; view -&gt; </span><br><span class="line">    <span class="comment">// do something</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>或者<strong>SAM转换</strong>为更简单的形式</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">view.setOnClickListener&#123;</span><br><span class="line">    <span class="comment">// do something</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>上面的写法通过<strong>“onClick”</strong>来找hook函数是找不到的，下面我们要分析为何hook不到？原因很简单：<strong>语法糖的原因</strong>，其实他是dosomething是没有承载他的函数的，被优化了，这叫做<strong>SAM转换</strong></p>
+</li>
+</ul>
+<p><img src="https://pic2.zhimg.com/80/v2-7dcd2746c77ef5b6a7a5a8a6ae44c78d_1440w.webp" alt="img"></p>
+<p>根据图所示，自定义的 Android 插件是在 D8&#x2F;R8 之前先操作 .class 文件。D8 是 Android 提供的脱糖工具，这就导致自定义插件获取的 .class 是原始未脱糖的 .class</p>
+<p>因此我们需要做的事<strong>脱糖后，找到相关的方法</strong></p>
+<h2 id="三、-找到lambda方法"><a href="#三、-找到lambda方法" class="headerlink" title="三、 找到lambda方法"></a>三、 找到lambda方法</h2><p>首先我们先看，lamdba表达式写法，对应上面的例子，为了做无埋点的点击事件插桩，我们写了一个函数</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">SecondActivity</span> : AppCompatActivity() &#123;</span><br><span class="line">    override fun <span class="title function_">onCreate</span><span class="params">(savedInstanceState: Bundle?)</span> &#123;</span><br><span class="line">        <span class="built_in">super</span>.onCreate(savedInstanceState)</span><br><span class="line">        setContentView(R.layout.activity_second)</span><br><span class="line">        <span class="type">val</span> <span class="variable">button</span> <span class="operator">=</span> findViewById&lt;Button&gt;(R.id.button)</span><br><span class="line">          </span><br><span class="line">        button.setOnClickListener &#123;</span><br><span class="line">            print(<span class="string">&quot;hello lambda&quot;</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>用ASM view工具看看字节码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">methodVisitor = classWriter.visitMethod(ACC_PROTECTED, <span class="string">&quot;onCreate&quot;</span>, <span class="string">&quot;(Landroid/os/Bundle;)V&quot;</span>, <span class="literal">null</span>, <span class="literal">null</span>);</span><br><span class="line">.......</span><br><span class="line">methodVisitor.visitInvokeDynamicInsn(<span class="string">&quot;onClick&quot;</span>, <span class="string">&quot;()Landroid/view/View$OnClickListener;&quot;</span>, <span class="keyword">new</span> <span class="title class_">Handle</span>(Opcodes.H_INVOKESTATIC, <span class="string">&quot;java/lang/invoke/LambdaMetafactory&quot;</span>, <span class="string">&quot;metafactory&quot;</span>, <span class="string">&quot;(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;&quot;</span>, <span class="literal">false</span>), <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;Type.getType(<span class="string">&quot;(Landroid/view/View;)V&quot;</span>), <span class="keyword">new</span> <span class="title class_">Handle</span>(Opcodes.H_INVOKESTATIC, <span class="string">&quot;com/example/moduletest/SecondActivity&quot;</span>, <span class="string">&quot;onCreate$lambda$0&quot;</span>, <span class="string">&quot;(Landroid/view/View;)V&quot;</span>, <span class="literal">false</span>), Type.getType(<span class="string">&quot;(Landroid/view/View;)V&quot;</span>)&#125;);</span><br><span class="line">methodVisitor.visitMethodInsn(INVOKEVIRTUAL, <span class="string">&quot;android/widget/Button&quot;</span>, <span class="string">&quot;setOnClickListener&quot;</span>, <span class="string">&quot;(Landroid/view/View$OnClickListener;)V&quot;</span>, <span class="literal">false</span>);</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">methodVisitor = classWriter.visitMethod(ACC_PRIVATE | ACC_FINAL | ACC_STATIC, &quot;onCreate$lambda$0&quot;, &quot;(Landroid/view/View;)V&quot;, null, null);</span><br><span class="line">methodVisitor.visitCode();</span><br><span class="line">methodVisitor.visitLdcInsn(&quot;hello lambda&quot;);</span><br><span class="line">methodVisitor.visitFieldInsn(GETSTATIC, &quot;java/lang/System&quot;, &quot;out&quot;, &quot;Ljava/io/PrintStream;&quot;);</span><br><span class="line">methodVisitor.visitInsn(SWAP);</span><br><span class="line">methodVisitor.visitMethodInsn(INVOKEVIRTUAL, &quot;java/io/PrintStream&quot;, &quot;print&quot;, &quot;(Ljava/lang/Object;)V&quot;, false);</span><br><span class="line">methodVisitor.visitInsn(RETURN);</span><br><span class="line">methodVisitor.visitMaxs(2, 1);</span><br><span class="line">methodVisitor.visitEnd();</span><br></pre></td></tr></table></figure>
+
+<p>从上面的字节码我们可以看出onclick相关方法中多了一些奇怪的东西</p>
+<ul>
+<li>visitInvokeDynamicInsn</li>
+<li>LambdaMetafactory</li>
+<li>metafactory</li>
+<li>MethodType</li>
+<li>CallSite</li>
+<li>onCreate$lambda$0</li>
+</ul>
+<h3 id="Invokedynamic-指令"><a href="#Invokedynamic-指令" class="headerlink" title="Invokedynamic 指令"></a>Invokedynamic 指令</h3><p>在正式介绍如何使用 ASM 处理 Lambda 和方法引用之前，我们首先了解一下字节码指令 <em><strong>invokedynamic*<strong>。</strong>invokedynamic</strong> 指令是在 JDK 7 引入的，用来实现动态类型语言功能，简单来说就是能够在运行时去调用实际的代码。在进一步介绍 invokedynamic 指令之前，我们先熟悉几个类：</em><strong>MethodType、MethodHandle、CallSite* 。</strong>在介绍这几个类之前我们先来了解一个方法的构成：</p>
+<ul>
+<li>方法名；</li>
+<li>方法签名（参数类型和返回值类型）；</li>
+<li>方法所在的类；</li>
+<li>方法体（方法中的代码）。</li>
+</ul>
+<p>根据上面方法的构成，我们来依次介绍上面的几个类的用法。</p>
+<p>** MethodType**</p>
+<p>MethodType 代表一个方法所需的参数签名和返回值签名，MethodType 类有多个静态方法来构造 MethodType 对象，示例如下：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">MethodType methodType = MethodType.methodType(String.class, int.class);</span><br></pre></td></tr></table></figure>
+
+<p>上面这个 MethodType 描述的是返回值为 String 类型，参数是一个 int 类型的方法签名，例如：int foo(String) 这个方法就符合这个描述。</p>
+<p><strong>MethodHandle</strong></p>
+<p>MethodHandle 翻译过来就是方法句柄，通过这个句柄可以调用相应的方法，MethodType 描述了方法的参数和返回值，MethodHandle 则是根据类名、方法名并且配合 MethodType 来找到特定方法然后执行它；MethodType 和 MethodHandle 配合起来完整表达了一个方法的构成。例如：我们调用 String.valueOf(int) 方法，可以这么做：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">//声明参数和返回值类型</span><br><span class="line">MethodType methodType = MethodType.methodType(String.class, int.class);</span><br><span class="line">MethodHandles.Lookup lookup = MethodHandles.lookup();</span><br><span class="line">//声明一个方法句柄：这里说明的是 String 类里面的 valueOf 方法，方法签名需要符合 methodType</span><br><span class="line">MethodHandle methodHandle = lookup.findStatic(String.class, &quot;valueOf&quot;, methodType);</span><br><span class="line">//执行这个方法</span><br><span class="line">String result = (String) methodHandle.invoke(99);</span><br><span class="line">System.out.println(result);</span><br></pre></td></tr></table></figure>
+
+<p>这个跟反射很类似，从这个例子可以看出方法句柄里包含了需要执行的方法信息，只要传入所需的参数就可以执行这个方法了。</p>
+<p><strong>CallSite</strong></p>
+<p>CallSite 是方法调用点，调用点中包含了方法句柄信息，通常 invokedynamic 指令所描述的内容会使用 CallSite 来链接，关于这块内容的介绍也可以在 「<a href="https://link.zhihu.com/?target=https://mp.weixin.qq.com/s?__biz=MzA3ODUxNTI0OA==&mid=2247483787&idx=1&sn=dc6e6d44acd0576ee302db0466e8ffc2&chksm=9f40dcd4a83755c2857ab430391eafa67bb759b9fe73bd089436db7f6361b1d2f141baea8562&mpshare=1&scene=1&srcid=0706Fg6ZgHHalkgWPeuhFqst&sharer_sharetime=1594032485178&sharer_shareid=91828d0acaf1810230db571b9bb3b38f&rd2werd=1%23wechat_redirect">Lambda 设计参考</a>」找到。可以从调用点上获取 MethodHandle ，代码如下所示：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">CallSite callSite = new ConstantCallSite(methodHandle);</span><br><span class="line">MethodHandle mh = callSite.getTarget();</span><br></pre></td></tr></table></figure>
+
+<p><strong>LambdaMetafacotry.metafactory</strong></p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">public static CallSite metafactory(MethodHandles.Lookup caller,</span><br><span class="line">                                       String invokedName,</span><br><span class="line">                                       MethodType invokedType,</span><br><span class="line">                                       MethodType samMethodType,</span><br><span class="line">                                       MethodHandle implMethod,</span><br><span class="line">                                       MethodType instantiatedMethodType)</span><br></pre></td></tr></table></figure>
+
+<p>这个方法会返回一个 Callsite 调用点，调用点中包括了方法句柄信息，我们现在来详细解释下这个方法的参数，其中前三个参数不需要关注，系统会自动生成，主要是看后面三个参数：</p>
+<ul>
+<li><strong>samMethodType</strong>: 函数式接口中抽象方法的签名描述信息，关于 MethodType 前面的章节有介绍，这里的方法签名是 Consumer#apply 的签名，因为泛型参数，泛型 T 统一被转换成 Object（注：这里的 sam 指的是 Single Abstract Method，大家可以理解为函数式接口）；</li>
+<li><strong>implMethod</strong>: 是一个方法句柄，这个在前面也介绍了，方法句柄包含了具体需要执行的方法，从上面的字节码可以看到，这个方法句柄的内容是：#23 invokestatic cn&#x2F;curious&#x2F;asm&#x2F;method_ref&#x2F;TestMain2.lambda$main$0:(Ljava&#x2F;lang&#x2F;String;)V，意思是调用静态方法 lambda$main$0，在前面有介绍 Lambda 脱糖的时候我们知道，Lambda 会生成一个方法，此方法默认是隐藏的，如果想查看，可以使用 java 的 javap -p -v xxx.class 命令查看这个方法；</li>
+<li><strong>instantiatedMethodType</strong>: 是 samMethodType 的具体实现，源码传入的泛型类型是 String，所以这里就是 String。</li>
+</ul>
+<h3 id="使用ASM实现Hook"><a href="#使用ASM实现Hook" class="headerlink" title="使用ASM实现Hook"></a>使用ASM实现Hook</h3><p><strong>我们知道方法句柄中包含了方法调用的信息，而且我们也说明了方法引用并不会生成一个 lambda$ 开头的中间方法，同时我们知道 MethodHandle 包含了方法调用的信息。因此，如果要去 Hook Lambda 和方法引用，我们可以创建一个新的 MethodHandle 替换原有的。具体做法是：我们会生成一个新的方法，新的方法中会实现 invokedynamic 指令中描述的代码逻辑。然后创建新的 MethodHandle，将这个 MethodHandle 替换原本的 MethodHandle</strong>。</p>
+<p>简化成伪代码如下</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//伪代码</span></span><br><span class="line"><span class="comment">//原始匿名内部类实现</span></span><br><span class="line">view.setOnClickListener(<span class="keyword">new</span> <span class="title class_">View</span>.OnClickListener() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onClick</span><span class="params">(View v)</span> &#123;</span><br><span class="line">        println(<span class="string">&quot;hello lambda&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">//1.遍历InvokeDynamicInsn，因为onclick方法此时已经不会被编译出来，所以要先找到来匹配我们的需要onclick插桩的规则</span></span><br><span class="line">SAMMethodClass = android/view/<span class="type">View$OnClickListener</span></span><br><span class="line"><span class="variable">SAMMethodName</span> <span class="operator">=</span> onClick</span><br><span class="line">  </span><br><span class="line"><span class="comment">//2.找到生成方法</span></span><br><span class="line"><span class="type">val</span> <span class="variable">generateMethodNameAndDesc</span> <span class="operator">=</span> oldHandle.name + oldHandle.desc</span><br><span class="line">          </span><br><span class="line"></span><br><span class="line"><span class="comment">//3.所以伪代码就是</span></span><br><span class="line">view.setOnClickListener(<span class="keyword">new</span> <span class="title class_">SAMMethodClass</span>()) &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> onCreate$lambda$<span class="number">0</span>(View v) &#123;</span><br><span class="line">        println(<span class="string">&quot;hello lambda&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id=""><a href="#" class="headerlink" title=""></a></h3><h4 id="AsmClassVisitorFactory实现"><a href="#AsmClassVisitorFactory实现" class="headerlink" title="AsmClassVisitorFactory实现"></a>AsmClassVisitorFactory实现</h4><p>如下文章使用AsmClassVisitorFactory进行插桩，上述寻找DynamicInsn和匹配实现的比较清晰，可以参考</p>
+<p><a target="_blank" rel="noopener" href="https://juejin.cn/post/7042328862872567838">https://juejin.cn/post/7042328862872567838</a></p>
+<h4 id="Asm-Transform实现"><a href="#Asm-Transform实现" class="headerlink" title="Asm Transform实现"></a>Asm Transform实现</h4><ol>
+<li>复写该函数，找到我们想要hook的中间方法，并用Map记录</li>
+</ol>
+<p><code>public void visitInvokeDynamicInsn(String samMethodName, String descriptor,                                   Handle bootstrapMethodHandle, Object... bsmArgs)</code></p>
+<p>2.复现<code>public void visitCode() </code></p>
+<p>在中间方法进入的时候对中间方法进行插桩</p>
+<h2 id="四、将点击的View进行hook"><a href="#四、将点击的View进行hook" class="headerlink" title="四、将点击的View进行hook"></a>四、将点击的View进行hook</h2><h3 id="1-将View的id作为参数"><a href="#1-将View的id作为参数" class="headerlink" title="1.将View的id作为参数"></a>1.将View的id作为参数</h3><p>无埋点上报，最关键的不仅仅是在onclick的方法进行上报，还必须将View的id作为上报的position上报上去，在我们开开心心的准备写入时，再回头看看原来的方法如果是<strong>匿名内部类</strong>如何获取view</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">view.setOnClickListener(<span class="keyword">new</span> <span class="title class_">View</span>.OnClickListener() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onClick</span><span class="params">(View v)</span> &#123;</span><br><span class="line">        <span class="comment">// do something</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li>找到onclick方法</li>
+<li>将View v作为参数，传递给hook的函数</li>
+</ol>
+<p>如果是lamda表达式，或者<strong>SAM转换</strong>为更简单的形式</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">view.setOnClickListener&#123; view -&gt; </span><br><span class="line">    <span class="comment">// do something</span></span><br><span class="line">&#125;</span><br><span class="line">view.setOnClickListener&#123;</span><br><span class="line">    <span class="comment">// do something</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>伪代码如下</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">view.setOnClickListener(<span class="keyword">new</span> <span class="title class_">SAMMethodClass</span>()) &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> onCreate$lambda$<span class="number">0</span>(View v) &#123;</span><br><span class="line">        println(<span class="string">&quot;hello lambda&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li>找到onCreate$lambda$0方法</li>
+<li>将View v作为参数，传递给hook的函数</li>
+</ol>
+<p>​    String a &#x3D; this.mParam1;</p>
+<h3 id="2-隐式This-指针的坑"><a href="#2-隐式This-指针的坑" class="headerlink" title="2.隐式This 指针的坑"></a>2.隐式This 指针的坑</h3><h3 id="1）-问题发现"><a href="#1）-问题发现" class="headerlink" title="1） 问题发现"></a>1） 问题发现</h3><p>当我们将如下函数作为hook函数进行上报时，在apply工程中发生了crash，经过定位与this指针有关</p>
+<p>示例代码,假如我们要插入printViewid函数 , 其中printViewid <strong>是一个java的static函数</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">lambda.setOnClickListener(view -&gt; &#123;</span><br><span class="line">    Test.printViewid(v)</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>我们用如下代码查看下</p>
+<p><img src="https://p.ipic.vip/uimv4x.png" alt="image-20231103155128261"></p>
+<p>稍微增加一行</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">lambda.setOnClickListener(view -&gt; &#123;</span><br><span class="line">    <span class="built_in">this</span>.application</span><br><span class="line">    Test.printViewid(v)</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://p.ipic.vip/qmv76f.png" alt="image-20231103155307866"></p>
+<p><strong>view函数ALOAD的index是变动的，这该如何插入到我们预定的插桩函数中？</strong></p>
+<h3 id="2）原因"><a href="#2）原因" class="headerlink" title="2）原因"></a>2）原因</h3><p><strong>不得复习下</strong> 从零单学跨平台无埋点上报的 ASM 准备知识中的内容</p>
+<p><img src="https://p.ipic.vip/kkjrdy.jpg" alt="img"></p>
+<p>文件里我们可以看到属性中包含2个部分:</p>
+<ul>
+<li><strong>Code 区</strong>: 源代码对应的 JVM 指令操作码，我们在字节码增强的时候重点操作的就是这个部分。</li>
+<li><strong>LineNumberTable</strong>: 型号表，将 Code 区的操作码和源代码的行号对应，Debug 时会起到作用（即: 当源代码向下走一行，相应的需要走几个 JVM 指令操作码）。</li>
+</ul>
+<p>一般情况下还会包括本地变量表。**</p>
+<ul>
+<li><strong>LocalVariableTable</strong>: 本地变量表，包含 this 和局部变量，之所以可以在每一个<strong>非 static</strong> 的方法内部都可以调用到 this，<strong>是因为 JVM 将 this 作为每个方法的第一个参数隐式进行传入。</strong></li>
+</ul>
+<p><strong>如果我们的Hook插入的方法是static方法，不会默认把static方法传入，当里面包含this指针后，才会把this指针传入，因此，因此我们的ALOAD是变化的，</strong>所以更改的方案有两个</p>
+<ol>
+<li>把hook的方法改为非static方法， JVM 将 this 作为每个方法的第一个参数隐式进行传入。</li>
+<li>遍历LocalVariableTable，当变量名为需要的hook的参数时，比如<code>Landroid/view/View;</code>，记录index，后续将index传给ALOAD</li>
+</ol>
+<h2 id="五、全文总结"><a href="#五、全文总结" class="headerlink" title="五、全文总结"></a>五、全文总结</h2><p>本文介绍了：如果用ASM框架处理lambda表达式，用来应对kotlin中的onclick语法糖的问题</p>
+<p>后续的文章会从如果hook <strong>C++代码来进一步进行无埋点上报</strong></p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/159286720">https://zhuanlan.zhihu.com/p/159286720</a></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/leavesCZY/asm-samples">https://github.com/leavesCZY/asm-samples</a></p>
+<p><a target="_blank" rel="noopener" href="https://juejin.cn/post/7127563086566785038">https://juejin.cn/post/7127563086566785038</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/ASM/" rel="tag"># ASM</a>
+              <a href="/tags/%E6%97%A0%E5%9F%8B%E7%82%B9/" rel="tag"># 无埋点</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/11/01/%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A51-ASM%20%E5%87%86%E5%A4%87%E7%9F%A5%E8%AF%86/" rel="prev" title="从零单学跨平台无埋点上报1-ASM准备知识">
+      <i class="fa fa-chevron-left"></i> 从零单学跨平台无埋点上报1-ASM准备知识
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A53-ASM-%E5%AF%B9lambda%E8%AF%AD%E6%B3%95%E7%B3%96%E7%9A%84hook"><span class="nav-number">1.</span> <span class="nav-text">从零单学跨平台无埋点上报3-ASM 对lambda语法糖的hook</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81Previous-Review"><span class="nav-number">1.1.</span> <span class="nav-text">一、Previous Review</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E6%8C%91%E6%88%98%EF%BC%9Ahook%E4%B8%8D%E5%88%B0lambda"><span class="nav-number">1.2.</span> <span class="nav-text">二、挑战：hook不到lambda</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%85%E9%83%A8%E7%B1%BB%E5%86%99%E6%B3%95"><span class="nav-number">1.2.1.</span> <span class="nav-text">内部类写法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#lambda%E8%A1%A8%E8%BE%BE%E5%BC%8F%E5%86%99%E6%B3%95"><span class="nav-number">1.2.2.</span> <span class="nav-text">lambda表达式写法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81-%E6%89%BE%E5%88%B0lambda%E6%96%B9%E6%B3%95"><span class="nav-number">1.3.</span> <span class="nav-text">三、 找到lambda方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Invokedynamic-%E6%8C%87%E4%BB%A4"><span class="nav-number">1.3.1.</span> <span class="nav-text">Invokedynamic 指令</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8ASM%E5%AE%9E%E7%8E%B0Hook"><span class="nav-number">1.3.2.</span> <span class="nav-text">使用ASM实现Hook</span></a></li><li class="nav-item nav-level-3"><a class="nav-link"><span class="nav-number">1.3.3.</span> <span class="nav-text"></span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#AsmClassVisitorFactory%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.3.3.1.</span> <span class="nav-text">AsmClassVisitorFactory实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Asm-Transform%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.3.3.2.</span> <span class="nav-text">Asm Transform实现</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E5%B0%86%E7%82%B9%E5%87%BB%E7%9A%84View%E8%BF%9B%E8%A1%8Chook"><span class="nav-number">1.4.</span> <span class="nav-text">四、将点击的View进行hook</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%B0%86View%E7%9A%84id%E4%BD%9C%E4%B8%BA%E5%8F%82%E6%95%B0"><span class="nav-number">1.4.1.</span> <span class="nav-text">1.将View的id作为参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E9%9A%90%E5%BC%8FThis-%E6%8C%87%E9%92%88%E7%9A%84%E5%9D%91"><span class="nav-number">1.4.2.</span> <span class="nav-text">2.隐式This 指针的坑</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1%EF%BC%89-%E9%97%AE%E9%A2%98%E5%8F%91%E7%8E%B0"><span class="nav-number">1.4.3.</span> <span class="nav-text">1） 问题发现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%EF%BC%89%E5%8E%9F%E5%9B%A0"><span class="nav-number">1.4.4.</span> <span class="nav-text">2）原因</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E5%85%A8%E6%96%87%E6%80%BB%E7%BB%93"><span class="nav-number">1.5.</span> <span class="nav-text">五、全文总结</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">christiecui</p>
+  <div class="site-description" itemprop="description">终身学习</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">3</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">christiecui</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
