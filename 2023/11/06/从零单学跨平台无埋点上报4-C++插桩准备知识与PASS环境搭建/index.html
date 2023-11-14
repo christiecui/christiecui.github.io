@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="从零单学跨平台无埋点上报4-C-插桩准备知识与PASS环境搭建.md1、背景知识1.1 LLVM与GCC与CLANG是什么          GCC GCC（GNU Compiler Collection，GNU编译器套装），是一套由 GNU 开发的编程语言编译器。包括前段和后端     LLVM 苹果以前用GCC编译器，后来用LLVM用于替换GCC，规划了上述的前端，IR，后端架构     CL">
+<meta property="og:type" content="article">
+<meta property="og:title" content="从零单学跨平台无埋点上报4-C++插桩准备知识与PASS环境搭建">
+<meta property="og:url" content="http://example.com/2023/11/06/%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A54-C++%E6%8F%92%E6%A1%A9%E5%87%86%E5%A4%87%E7%9F%A5%E8%AF%86%E4%B8%8EPASS%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/index.html">
+<meta property="og:site_name" content="Christie的博客">
+<meta property="og:description" content="从零单学跨平台无埋点上报4-C-插桩准备知识与PASS环境搭建.md1、背景知识1.1 LLVM与GCC与CLANG是什么          GCC GCC（GNU Compiler Collection，GNU编译器套装），是一套由 GNU 开发的编程语言编译器。包括前段和后端     LLVM 苹果以前用GCC编译器，后来用LLVM用于替换GCC，规划了上述的前端，IR，后端架构     CL">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://p.ipic.vip/wuit8c.jpg">
+<meta property="og:image" content="https://p.ipic.vip/26zgey.jpg">
+<meta property="og:image" content="https://p.ipic.vip/947hot.jpg">
+<meta property="og:image" content="https://p.ipic.vip/p9moyt.jpg">
+<meta property="og:image" content="https://p.ipic.vip/3a4a6f.jpg">
+<meta property="og:image" content="https://p.ipic.vip/30kc9l.jpg">
+<meta property="og:image" content="https://p.ipic.vip/vl4a05.jpg">
+<meta property="og:image" content="https://p.ipic.vip/yic0on.jpg">
+<meta property="og:image" content="https://p.ipic.vip/89jxb3.jpg">
+<meta property="og:image" content="https://p.ipic.vip/zcydz8.jpg">
+<meta property="article:published_time" content="2023-11-06T04:01:43.000Z">
+<meta property="article:modified_time" content="2023-11-14T12:45:34.211Z">
+<meta property="article:author" content="christie">
+<meta property="article:tag" content="ASM">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://p.ipic.vip/wuit8c.jpg">
+
+<link rel="canonical" href="http://example.com/2023/11/06/%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A54-C++%E6%8F%92%E6%A1%A9%E5%87%86%E5%A4%87%E7%9F%A5%E8%AF%86%E4%B8%8EPASS%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>从零单学跨平台无埋点上报4-C++插桩准备知识与PASS环境搭建 | Christie的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Christie的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/11/06/%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A54-C++%E6%8F%92%E6%A1%A9%E5%87%86%E5%A4%87%E7%9F%A5%E8%AF%86%E4%B8%8EPASS%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="christie">
+      <meta itemprop="description" content="终身学习">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Christie的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          从零单学跨平台无埋点上报4-C++插桩准备知识与PASS环境搭建
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-11-06 12:01:43" itemprop="dateCreated datePublished" datetime="2023-11-06T12:01:43+08:00">2023-11-06</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-11-14 20:45:34" itemprop="dateModified" datetime="2023-11-14T20:45:34+08:00">2023-11-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/ASM/" itemprop="url" rel="index"><span itemprop="name">ASM</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="从零单学跨平台无埋点上报4-C-插桩准备知识与PASS环境搭建-md"><a href="#从零单学跨平台无埋点上报4-C-插桩准备知识与PASS环境搭建-md" class="headerlink" title="从零单学跨平台无埋点上报4-C-插桩准备知识与PASS环境搭建.md"></a>从零单学跨平台无埋点上报4-C-插桩准备知识与PASS环境搭建.md</h1><h3 id="1、背景知识"><a href="#1、背景知识" class="headerlink" title="1、背景知识"></a>1、背景知识</h3><h4 id="1-1-LLVM与GCC与CLANG是什么"><a href="#1-1-LLVM与GCC与CLANG是什么" class="headerlink" title="1.1 LLVM与GCC与CLANG是什么"></a>1.1 LLVM与GCC与CLANG是什么</h4><table>
+<thead>
+<tr>
+<th align="left"></th>
+<th align="left"></th>
+<th align="left"></th>
+<th align="left"></th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">GCC</td>
+<td align="left"><strong>GCC（GNU Compiler Collection，GNU编译器套装），是一套由 GNU 开发的编程语言编译器。包括前段和后端</strong></td>
+<td align="left"></td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="left"><strong>LLVM</strong></td>
+<td align="left"><strong>苹果以前用GCC编译器，后来用LLVM用于替换GCC</strong>，规划了上述的前端，IR，后端架构</td>
+<td align="left"></td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="left">CLANG</td>
+<td align="left">LLVM的Frontend,<strong>是一个C、C++、Objective-C和Objective-C++</strong></td>
+<td align="left"></td>
+<td align="left"></td>
+</tr>
+</tbody></table>
+<h4 id="1-2-LLVM编译原理"><a href="#1-2-LLVM编译原理" class="headerlink" title="1.2 LLVM编译原理"></a>1.2 LLVM编译原理</h4><p><img src="https://p.ipic.vip/wuit8c.jpg" alt="6e941619cc174e7496beca1c52aa0342"></p>
+<p><strong>LLVM是编译器工具链技术的一个集合，包括</strong>：</p>
+<ul>
+<li>编译器前端：词法分析，语法分析，语义分析，生成中间代码。</li>
+<li>优化器：中间代码（Intermediate Representation）优化。</li>
+<li>编译器后端：生成对应架构平台的机器码。如x86，ARM等。</li>
+</ul>
+<p><strong>一些工具背景</strong>：</p>
+<ul>
+<li>编译器llc：对每个文件进行编译，生成Mach-O可执行文件。</li>
+<li>链接器lld：将每个Mach-O文件合并成一个，将符号绑定到地址上。lld即LLVM的内置链接器。</li>
+</ul>
+<p><strong>LLVM的要求</strong></p>
+<table>
+<thead>
+<tr>
+<th align="left">Package</th>
+<th align="left">Version</th>
+<th align="left">Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><a target="_blank" rel="noopener" href="http://cmake.org/">CMake</a></td>
+<td align="left">&gt;&#x3D;3.13.4</td>
+<td align="left">Makefile&#x2F;workspace generator</td>
+</tr>
+<tr>
+<td align="left"><a target="_blank" rel="noopener" href="http://gcc.gnu.org/">GCC</a></td>
+<td align="left">&gt;&#x3D;7.1.0</td>
+<td align="left">C&#x2F;C++ compiler1</td>
+</tr>
+<tr>
+<td align="left"><a target="_blank" rel="noopener" href="http://www.python.org/">python</a></td>
+<td align="left">&gt;&#x3D;3.6</td>
+<td align="left">Automated test suite2</td>
+</tr>
+<tr>
+<td align="left"><a target="_blank" rel="noopener" href="http://zlib.net/">zlib</a></td>
+<td align="left">&gt;&#x3D;1.2.3.4</td>
+<td align="left">Compression library3</td>
+</tr>
+<tr>
+<td align="left"><a target="_blank" rel="noopener" href="http://savannah.gnu.org/projects/make">GNU Make</a></td>
+<td align="left">3.79, 3.79.1</td>
+<td align="left">Makefile&#x2F;build processor4</td>
+</tr>
+</tbody></table>
+<h4 id="1-3-C-基础知识回顾"><a href="#1-3-C-基础知识回顾" class="headerlink" title="1.3 C++基础知识回顾"></a>1.3 C++基础知识回顾</h4><p>C++其实包含四个”子语言“：</p>
+<p>1、C：C++仍是以C为基础的，内置数据类型（char, int, double…)、数组、指针、语句、函数…</p>
+<p>2、Object-Oriented C++： 面向对象 C with Classes，类(构造、析构)、封装、集成、动态、动态绑定</p>
+<p>3、Template C++：泛式编程，模板以及引申的模板元编程(template metaprogramming)</p>
+<p>4、STL：模板程序库，容器、迭代器、算法、函数对象(functional)。<strong>（GNU写了一套，clang写了一套）</strong></p>
+<h3 id="2、LLVM与PASS"><a href="#2、LLVM与PASS" class="headerlink" title="2、LLVM与PASS"></a>2、LLVM与PASS</h3><h4 id="2-1-IR的基础概念"><a href="#2-1-IR的基础概念" class="headerlink" title="2.1 IR的基础概念"></a>2.1 IR的基础概念</h4><p><img src="https://p.ipic.vip/26zgey.jpg" alt="78b91181f11b4056b7318c725c213f7b"></p>
+<h5 id="Module"><a href="#Module" class="headerlink" title="Module"></a><strong>Module</strong></h5><p>Module 可以被视为一个.c文件的 <code>IR</code> 表示，如果用Java的描述的话，<strong>Module相当于Java里的类，是独立存在的一个东西。</strong></p>
+<p>每个Module都是相对独立的东西，主要包含了声明或者定义的函数、声明或定义的全局变量，因为在开发Pass的过程中，基本打交道的就是 <code>Function</code> 和 <code>GlobalVariable</code> 这两个东西。</p>
+<p>多个Module之间是相互隔离的、无法获取对方的内容，跟Java里类的设定真的非常像。</p>
+<p>平时为了获取Module 的主要信息，使用它的 <code>M.dump()</code> 方法就会在屏幕上打印出全部信息，非常非常的方便。</p>
+<h5 id="Function"><a href="#Function" class="headerlink" title="Function"></a><strong>Function</strong></h5><p>Function，是Module中以List的方式存放的，如果用Java的描述的话，Function相当于Java里的Method，无法单独存在，必须是在某个Module里的。主要包含了大量BasicBlock 、参数和返回值类型、可变参数列表、函数的attribute和其他函数的基本信息（例如函数名、所在Module等）</p>
+<p><strong>Function由无数个BasicBlock组成，使用列表存放，有且仅有一个EntryBlock</strong> ，是列表中的第一个BasicBlock，代码真正执行的时候，就从EntryBlock开始执行。因为函数不一定只有一个出口，所以Function是无法知道它退出时的Block的，没有这个API，如果非要知道的话可以手动去判断每个BasicBlock是否有后继。</p>
+<p>Function有两个很实用的函数，F.dump() 可以打印出全部信息，F.viewCfg() 可以将ControlFlowGraph按照dot的方式存到文件里，使用第三方工具可以很舒服地观察它，在Mac上叫Graphviz.app，效果如图。</p>
+<p><img src="https://p.ipic.vip/947hot.jpg" alt="f0369e2519e347a6967b9cb89a172f16"></p>
+<h5 id="BasicBlock"><a href="#BasicBlock" class="headerlink" title="BasicBlock"></a>BasicBlock</h5><p><strong>BasicBlock，是Function 中以List方式存放的，和Soot里的BasicBlock概念很像，无法单独存在，必须是在某个Function里的，是真正存放可执行代码的容器。主要包含了大量的Instruction ，前驱、后继的BasicBlock，</strong>以及一些基本信息（例如名字什么的），相比Function ，它的校验也更加严格，例如不可以凭空出现、不可以处于游离状态。</p>
+<p>BasicBlock由很多Instruction组成，按照是否为TerminatorInst 可以将指令分为两类，一类是普通的指令，一类是可以成为TerminatorInst 的指令；因此BasicBlock一定要以TerminatorInst类的指令结尾，而且除了最后一个指令是TerminatorInst，其他指令都是普通指令。常见的TerminatorInst 有BranchInst 、IndirectBrInst 、SwitchInst 和Return ，C++里还有一些异常处理的懒得列出了。</p>
+<p>每个BasicBlock都可以视为一段顺序执行的代码，完全不会有任何的分支，有分支就会通过TerminatorInst进行跳转。</p>
+<p><strong>BasicBlock 有两种创建方式，一种是凭空创建，然后插入到之前的CFG里</strong>；一种比较方便，使用SplitBasicBlock ，切为相连的两块，可能会遇到PhiNode的问题。</p>
+<h5 id="Instruction"><a href="#Instruction" class="headerlink" title="Instruction"></a>Instruction</h5><p>Instruction ，是BasicBlock 中以List方式存放的，和Soot里的Stmt的概念很像，无法单独存在，必须是在某个BasicBlock 里的，可以视为 IR 层面的汇编语句，或者说指令。类型非常多，都在查API，用的多了就记住了，多看官方的那个继承关系图。随便举个例子，例如在栈上申请一个int32，就用AllocaInst ，再加上int32的数据类型。</p>
+<h4 id="2-2-PASS的变更"><a href="#2-2-PASS的变更" class="headerlink" title="2.2 PASS的变更"></a>2.2 PASS的变更</h4><p><strong>变化 1：getOrInsertFunction 的返回值从 Function 变为 FunctionCallee变化</strong><br>表现：编译Pass时提示类型错误，代码飘红。 网上大量仓库也被迫进行修改 <a target="_blank" rel="noopener" href="https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=239175">https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=239175</a> <a target="_blank" rel="noopener" href="https://github.com/AFLplusplus/AFLplusplus/issues/40">https://github.com/AFLplusplus/AFLplusplus/issues/40</a> <a target="_blank" rel="noopener" href="https://github.com/stanson-ch/beignet.SlackBuild/blob/master/patches/llvm9-support.patch">https://github.com/stanson-ch/beignet.SlackBuild/blob/master/patches/llvm9-support.patch</a> 适配在这次commit中：<a target="_blank" rel="noopener" href="https://github.com/LeadroyaL/llvm-pass-tutorial/commit/e39c14206058a1b55c33a37e1b7e398df0d03960">https://github.com/LeadroyaL/llvm-pass-tutorial/commit/e39c14206058a1b55c33a37e1b7e398df0d03960</a></p>
+<p><strong>变化2：PassManager变化</strong><br>表现：加载 pass 时，控制流平坦化过程中出现错误：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Assertion failed: (Resolver &amp;&amp; &quot;Pass has not been inserted into a PassManager object!&quot;), function getAnalysis</span><br></pre></td></tr></table></figure>
+
+<p>根源是：llvm9的LowerSwitchPass里有了新的逻辑，依赖了一个 Analyze，而Analyze需要PassManager，不能凭空产生。这里其实我也不知道是为什么，反正表现出来确实是这样。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">LazyValueInfo *LVI = &amp;<span class="built_in">getAnalysis</span>&lt;LazyValueInfoWrapperPass&gt;().<span class="built_in">getLVI</span>();</span><br><span class="line"><span class="keyword">auto</span> *ACT = <span class="built_in">getAnalysisIfAvailable</span>&lt;AssumptionCacheTracker&gt;();</span><br></pre></td></tr></table></figure>
+
+<p><strong>变化3:LLVM10 + 需要使用c++14</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">In file included from ~/CLion_code/llvm-pass-tutorial/skeleton/Skeleton.cpp:1:</span><br><span class="line">In file included from ~/pllvm/r/include/llvm/Pass.h:31:</span><br><span class="line">In file included from ~/pllvm/r/include/llvm/ADT/StringRef.h:12:</span><br><span class="line">~/pllvm/r/include/llvm/ADT/STLExtras.h:559:49: error: no template named <span class="string">&#x27;index_sequence&#x27;</span> <span class="keyword">in</span> namespace <span class="string">&#x27;std&#x27;</span></span><br><span class="line">template &lt;size_t... Ns&gt; value_type deref(std::index_sequence&lt;Ns...&gt;) const &#123;</span><br><span class="line">~~~~~^</span><br><span class="line">~/pllvm/r/include/llvm/ADT/STLExtras.h:564:36: error: no template named <span class="string">&#x27;index_sequence&#x27;</span> <span class="keyword">in</span> namespace <span class="string">&#x27;std&#x27;</span></span><br><span class="line">decltype(iterators) tup_inc(std::index_sequence&lt;Ns...&gt;) const &#123;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="2、MAC环境下-LLVM-CLion环境搭建"><a href="#2、MAC环境下-LLVM-CLion环境搭建" class="headerlink" title="2、MAC环境下 LLVM+CLion环境搭建"></a>2、MAC环境下 LLVM+CLion环境搭建</h2><h4 id="2-1-目标：方便的调试LLVM-IR"><a href="#2-1-目标：方便的调试LLVM-IR" class="headerlink" title="2.1 目标：方便的调试LLVM+IR"></a>2.1 目标：方便的调试LLVM+IR</h4><p>工欲善善其事必先利其器，懒人必备，要能自动纠错，看代码，必须clion</p>
+<h4 id="2-2-安装CLion"><a href="#2-2-安装CLion" class="headerlink" title="2.2 安装CLion"></a>2.2 安装CLion</h4><p>参考：<a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_21746331/article/details/110198265">https://blog.csdn.net/qq_21746331/article/details/110198265</a></p>
+<p>在<a target="_blank" rel="noopener" href="https://www.jetbrains.com/clion/download/other.html">CLion官网</a>获取CLion的安装包 </p>
+<h4 id="2-3-编译LLVM-x2F-Clang"><a href="#2-3-编译LLVM-x2F-Clang" class="headerlink" title="2.3 编译LLVM&#x2F;Clang"></a>2.3 编译LLVM&#x2F;Clang</h4><p>2.3.1 获取llvm</p>
+<p>进入<a target="_blank" rel="noopener" href="https://releases.llvm.org/download.html">LLVM下载界面</a>，我这里选择的是10（因为我只是研究LLVM+IR，后续移植Android NDK21），所以下载<strong>llvm-project monorepo source code</strong>，里面包含其下所有的LLVM套件。比较简单</p>
+<p><img src="https://p.ipic.vip/p9moyt.jpg" alt="e5c14361f272495ab681b1c31f5c7049"></p>
+<p>2.3.2 编译</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ cd ~/llvm-project-10.0.0/</span><br><span class="line">$ mkdir build</span><br></pre></td></tr></table></figure>
+
+<p>然后打开CLion，点击<strong>Open File or Project</strong>，然后选择llvm源码文件夹，点击OK打开，这时候会进入CLion，并且CLion会根据llvm文件夹下的CMakeLists.txt自动执行CMake构建出一个目录<strong>cmake-build-debug</strong></p>
+<p><img src="https://p.ipic.vip/3a4a6f.jpg" alt="1c662ea8d1fc4bc0ae48daad98fc5acb"></p>
+<p><em><strong>但这个是不能编译的</strong></em> ，首先点击Tools-&gt;CMake-&gt;Chang Project Root，将其改为与llvm同级目录的build文件夹；然后点击File-&gt;Preferences-&gt;Build, Execution, Deployment-&gt;CMake进入CMake的配置窗口；在CMake配置窗口内，将Generate Path改为刚刚那个build的文件夹，同时将CMake options里面的内容添加以下选项：</p>
+<p><img src="https://p.ipic.vip/30kc9l.jpg" alt="1e3a78c29b0e479fb62e873aba7d5c32"></p>
+<p>CMake Options:</p>
+<p><code>-G &quot;Unix Makefiles&quot; -DLLVM_ENABLE_PROJECTS=clang -DLLVM_TARGETS_TO_BUILD=&quot;X86&quot; ../llvm</code></p>
+<p><strong>开始编译</strong>：点击Build-&gt;Build All in RelWithDebInfo，则开始正式编译项目了，编译生成的可执行文件均存放在build&#x2F;bin&#x2F;目录下</p>
+<p><strong>等待成功</strong></p>
+<p><img src="https://p.ipic.vip/vl4a05.jpg" alt="0bfbfa713de04053839edb963c1d71b7"></p>
+<h4 id="2-4-编译PASS"><a href="#2-4-编译PASS" class="headerlink" title="2.4 编译PASS"></a>2.4 编译PASS</h4><p>在llvm-project-10.0.0&#x2F;llvm&#x2F;lib&#x2F;Transforms 增加目录，比如Mypass</p>
+<p>在Mypass目录下，添加Mypass.cpp 与 CMakeLists.txt</p>
+<p><strong>修改CMakeLists.txt</strong></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">add_llvm_library</span>( LLVMMypass MODULE</span><br><span class="line">  Mypass.cpp</span><br><span class="line">  PLUGIN_TOOL</span><br><span class="line">  opt</span><br><span class="line">  )</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="built_in">add_dependencies</span>(LLVMMypass intrinsics_gen)</span><br></pre></td></tr></table></figure>
+
+
+
+<p><strong>新增MyPass.cpp</strong></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//===- Hello.cpp - Example code from &quot;Writing an LLVM Pass&quot; ---------------===//</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.</span></span><br><span class="line"><span class="comment">// See https://llvm.org/LICENSE.txt for license information.</span></span><br><span class="line"><span class="comment">// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">//===----------------------------------------------------------------------===//</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;llvm/Pass.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;llvm/IR/Function.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;llvm/Support/raw_ostream.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;llvm/IR/LegacyPassManager.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;llvm/Transforms/IPO/PassManagerBuilder.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;llvm/IR/Constants.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;llvm/IR/IRBuilder.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;llvm/IR/Instructions.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;llvm/IR/Module.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> llvm;</span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> &#123;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">  <span class="keyword">struct</span> <span class="title class_">Mypass</span> : <span class="keyword">public</span> FunctionPass &#123;</span><br><span class="line">      <span class="type">static</span> <span class="type">char</span> ID;</span><br><span class="line"></span><br><span class="line">      <span class="built_in">Mypass</span>() : <span class="built_in">FunctionPass</span>(ID) &#123;&#125;</span><br><span class="line"></span><br><span class="line">      <span class="function"><span class="type">bool</span> <span class="title">runOnFunction</span><span class="params">(Function &amp;F)</span> <span class="keyword">override</span> </span>&#123;</span><br><span class="line">        <span class="built_in">errs</span>() &lt;&lt; <span class="string">&quot;Hello: Mypass &quot;</span>;</span><br><span class="line">        <span class="built_in">errs</span>().<span class="built_in">write_escaped</span>(F.<span class="built_in">getName</span>()) &lt;&lt; <span class="string">&#x27;\n&#x27;</span>;</span><br><span class="line"></span><br><span class="line">      &#125;</span><br><span class="line">  &#125;; <span class="comment">// end of struct Hello</span></span><br><span class="line">&#125;  <span class="comment">// end of anonymous namespace</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="type">char</span> Mypass::ID = <span class="number">0</span>;</span><br><span class="line"><span class="type">static</span> RegisterPass &lt;Mypass&gt; <span class="built_in">X</span>(<span class="string">&quot;hello&quot;</span>, <span class="string">&quot;Hello World Mypass Pass&quot;</span>,</span><br><span class="line">                                  <span class="literal">false</span> <span class="comment">/* Only looks at CFG */</span>,</span><br><span class="line">                                  <span class="literal">false</span> <span class="comment">/* Analysis Pass */</span>);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">static</span> RegisterStandardPasses <span class="title">Y</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">        PassManagerBuilder::EP_EarlyAsPossible,</span></span></span><br><span class="line"><span class="params"><span class="function">        [](<span class="type">const</span> PassManagerBuilder &amp;Builder,</span></span></span><br><span class="line"><span class="params"><span class="function">           legacy::PassManagerBase &amp;PM) &#123; PM.add(<span class="keyword">new</span> Mypass()); &#125;)</span></span>;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><strong>修改lib&#x2F;Transforms&#x2F;CMakeLists.txt 文件</strong>，注意不是MyPass里的CMakeLists.txt, 添加</p>
+<p><code>add_subdirectory(Mypass)</code></p>
+<p><strong>编译</strong></p>
+<p>Build - Build All in RelWithDebInfo  等待。。。</p>
+<h4 id="2-5-调试PASS"><a href="#2-5-调试PASS" class="headerlink" title="2.5 调试PASS"></a>2.5 调试PASS</h4><p>新增一个简单的CPP文件llvmpasstest.cpp</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;llvmpasstest.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Hello, World!&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>llvmpasstest.h</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">ifndef</span> LLVMDEMO1_LLVMPASSTEST_H</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LLVMDEMO1_LLVMPASSTEST_H</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/time.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">llvmpasstest</span> &#123;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span> <span class="comment">//LLVMDEMO1_LLVMPASSTEST_H</span></span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>把build目录拖到cloin命令行，进入到build目录下, 把llvmpasstest.cpp与h copy进来 </p>
+<p>运行</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./bin/clang++ -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -Xclang -load -Xclang lib/LLVMMypass.dylib llvmpasstest.cpp -o llvmpasstest</span><br></pre></td></tr></table></figure>
+
+
+<p>这里可能会报错 </p>
+<p><img src="https://p.ipic.vip/yic0on.jpg" alt="e1a3b234096448b89bedbf7a47f0822e"></p>
+<p>或者Opt报错 </p>
+<p><code>Assertion failed: ((Record[i] == 5 || Record[i] == 6) &amp;&amp; &quot;Invalid attribute group entry&quot;), function parseAttributeGroupBlock</code></p>
+<p>可以运行<code>xcrun --show-sdk-path</code></p>
+<p>看一下<img src="https://p.ipic.vip/89jxb3.jpg" alt="565200fddef94f8fbf216ee20a9cc3f8"></p>
+<p>或者你用错了clang没有加<code>--sysroot=dir</code>也会报错</p>
+<p><code> fatal error: &#39;iostream&#39; file not found</code></p>
+<p>成功运行的结果</p>
+<p><img src="https://p.ipic.vip/zcydz8.jpg" alt="71dc850aac1f4fc6bb2daa1c71ee5ab5"></p>
+<p>这里为什么有很多_ZNS类似的类呢？ 见后续IR讲解</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>编译LLVM的Debug版本需要特别大的内存，我在实践中还是编译的RelWithDebInfo版本，对于阅读源码调试源码暂时够用了</p>
+<p>参考：</p>
+<p><a target="_blank" rel="noopener" href="https://www.leadroyal.cn/p/2206/">https://www.leadroyal.cn/p/2206/</a></p>
+<p><a target="_blank" rel="noopener" href="https://llvm.org/docs/WritingAnLLVMPass.html">https://llvm.org/docs/WritingAnLLVMPass.html</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/welhzh/p/4702552.html">https://www.cnblogs.com/welhzh/p/4702552.html</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/ASM/" rel="tag"># ASM</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/11/03/%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A53-ASM%20%E5%AF%B9lambda%E8%AF%AD%E6%B3%95%E7%B3%96%E7%9A%84hook/" rel="prev" title="从零单学跨平台无埋点上报3-ASM对lambda语法糖的hook">
+      <i class="fa fa-chevron-left"></i> 从零单学跨平台无埋点上报3-ASM对lambda语法糖的hook
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/11/08/%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A55-NDK17NDK23_PASS%E6%8F%92%E6%A1%A9%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/" rel="next" title="从零单学跨平台无埋点上报5-NDK17-21-23PASS插桩环境搭建">
+      从零单学跨平台无埋点上报5-NDK17-21-23PASS插桩环境搭建 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A54-C-%E6%8F%92%E6%A1%A9%E5%87%86%E5%A4%87%E7%9F%A5%E8%AF%86%E4%B8%8EPASS%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA-md"><span class="nav-number">1.</span> <span class="nav-text">从零单学跨平台无埋点上报4-C-插桩准备知识与PASS环境搭建.md</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81%E8%83%8C%E6%99%AF%E7%9F%A5%E8%AF%86"><span class="nav-number">1.0.1.</span> <span class="nav-text">1、背景知识</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-1-LLVM%E4%B8%8EGCC%E4%B8%8ECLANG%E6%98%AF%E4%BB%80%E4%B9%88"><span class="nav-number">1.0.1.1.</span> <span class="nav-text">1.1 LLVM与GCC与CLANG是什么</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-2-LLVM%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86"><span class="nav-number">1.0.1.2.</span> <span class="nav-text">1.2 LLVM编译原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-3-C-%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E5%9B%9E%E9%A1%BE"><span class="nav-number">1.0.1.3.</span> <span class="nav-text">1.3 C++基础知识回顾</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%E3%80%81LLVM%E4%B8%8EPASS"><span class="nav-number">1.0.2.</span> <span class="nav-text">2、LLVM与PASS</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-IR%E7%9A%84%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5"><span class="nav-number">1.0.2.1.</span> <span class="nav-text">2.1 IR的基础概念</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Module"><span class="nav-number">1.0.2.1.1.</span> <span class="nav-text">Module</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Function"><span class="nav-number">1.0.2.1.2.</span> <span class="nav-text">Function</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#BasicBlock"><span class="nav-number">1.0.2.1.3.</span> <span class="nav-text">BasicBlock</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Instruction"><span class="nav-number">1.0.2.1.4.</span> <span class="nav-text">Instruction</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-PASS%E7%9A%84%E5%8F%98%E6%9B%B4"><span class="nav-number">1.0.2.2.</span> <span class="nav-text">2.2 PASS的变更</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2%E3%80%81MAC%E7%8E%AF%E5%A2%83%E4%B8%8B-LLVM-CLion%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA"><span class="nav-number">1.1.</span> <span class="nav-text">2、MAC环境下 LLVM+CLion环境搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-%E7%9B%AE%E6%A0%87%EF%BC%9A%E6%96%B9%E4%BE%BF%E7%9A%84%E8%B0%83%E8%AF%95LLVM-IR"><span class="nav-number">1.1.0.1.</span> <span class="nav-text">2.1 目标：方便的调试LLVM+IR</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-%E5%AE%89%E8%A3%85CLion"><span class="nav-number">1.1.0.2.</span> <span class="nav-text">2.2 安装CLion</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-3-%E7%BC%96%E8%AF%91LLVM-x2F-Clang"><span class="nav-number">1.1.0.3.</span> <span class="nav-text">2.3 编译LLVM&#x2F;Clang</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-4-%E7%BC%96%E8%AF%91PASS"><span class="nav-number">1.1.0.4.</span> <span class="nav-text">2.4 编译PASS</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-5-%E8%B0%83%E8%AF%95PASS"><span class="nav-number">1.1.0.5.</span> <span class="nav-text">2.5 调试PASS</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">1.2.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">christie</p>
+  <div class="site-description" itemprop="description">终身学习</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">5</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">christie</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
