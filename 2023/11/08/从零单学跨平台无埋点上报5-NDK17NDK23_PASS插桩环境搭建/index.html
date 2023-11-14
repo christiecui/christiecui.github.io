@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="一、前文回顾 -LLVM编译原理 LLVM是编译器工具链技术的一个集合，包括：  编译器前端：词法分析，语法分析，语义分析，生成中间代码。  优化器：中间代码（Intermediate Representation）优化。  编译器后端：生成对应架构平台的机器码。如x86，ARM等。  编译器llc：对每个文件进行编译，生成Mach-O可执行文件。  链接器lld：将每个Mach-O文件合并成一个">
+<meta property="og:type" content="article">
+<meta property="og:title" content="从零单学跨平台无埋点上报5-NDK17-21-23PASS插桩环境搭建">
+<meta property="og:url" content="http://example.com/2023/11/08/%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A55-NDK17NDK23_PASS%E6%8F%92%E6%A1%A9%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/index.html">
+<meta property="og:site_name" content="Christie的博客">
+<meta property="og:description" content="一、前文回顾 -LLVM编译原理 LLVM是编译器工具链技术的一个集合，包括：  编译器前端：词法分析，语法分析，语义分析，生成中间代码。  优化器：中间代码（Intermediate Representation）优化。  编译器后端：生成对应架构平台的机器码。如x86，ARM等。  编译器llc：对每个文件进行编译，生成Mach-O可执行文件。  链接器lld：将每个Mach-O文件合并成一个">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://p.ipic.vip/wuit8c.jpg">
+<meta property="og:image" content="https://p.ipic.vip/g0ujmq.png">
+<meta property="og:image" content="https://p.ipic.vip/3r67mv.png">
+<meta property="og:image" content="https://p.ipic.vip/cupyob.png">
+<meta property="og:image" content="https://p.ipic.vip/x1a7t5.png">
+<meta property="og:image" content="https://bbs.kanxue.com/upload/attach/202201/910514_A867QTEZ993UG2B.png">
+<meta property="og:image" content="https://p.ipic.vip/26zgey.jpg">
+<meta property="article:published_time" content="2023-11-08T03:46:41.000Z">
+<meta property="article:modified_time" content="2023-11-14T12:40:55.576Z">
+<meta property="article:author" content="christie">
+<meta property="article:tag" content="pass llvm">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://p.ipic.vip/wuit8c.jpg">
+
+<link rel="canonical" href="http://example.com/2023/11/08/%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A55-NDK17NDK23_PASS%E6%8F%92%E6%A1%A9%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>从零单学跨平台无埋点上报5-NDK17-21-23PASS插桩环境搭建 | Christie的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Christie的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/11/08/%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A55-NDK17NDK23_PASS%E6%8F%92%E6%A1%A9%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="christie">
+      <meta itemprop="description" content="终身学习">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Christie的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          从零单学跨平台无埋点上报5-NDK17-21-23PASS插桩环境搭建
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-11-08 11:46:41" itemprop="dateCreated datePublished" datetime="2023-11-08T11:46:41+08:00">2023-11-08</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-11-14 20:40:55" itemprop="dateModified" datetime="2023-11-14T20:40:55+08:00">2023-11-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/pass-llvm/" itemprop="url" rel="index"><span itemprop="name">pass llvm</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="一、前文回顾-LLVM编译原理"><a href="#一、前文回顾-LLVM编译原理" class="headerlink" title="一、前文回顾 -LLVM编译原理"></a>一、前文回顾 -LLVM编译原理</h1><p><img src="https://p.ipic.vip/wuit8c.jpg" alt="6e941619cc174e7496beca1c52aa0342"></p>
+<p>LLVM是编译器工具链技术的一个集合，包括：</p>
+<ul>
+<li><p>编译器前端：词法分析，语法分析，语义分析，生成中间代码。</p>
+</li>
+<li><p>优化器：中间代码（Intermediate Representation）优化。</p>
+</li>
+<li><p>编译器后端：生成对应架构平台的机器码。如x86，ARM等。</p>
+</li>
+<li><p>编译器llc：对每个文件进行编译，生成Mach-O可执行文件。</p>
+</li>
+<li><p>链接器lld：将每个Mach-O文件合并成一个，将符号绑定到地址上。lld即LLVM的内置链接器。</p>
+</li>
+</ul>
+<h1 id="二、挑战-：NDK适配"><a href="#二、挑战-：NDK适配" class="headerlink" title="二、挑战 ：NDK适配"></a>二、挑战 ：NDK适配</h1><p>如果要适配NDK下，先要理清楚LLVM，NDK，iOS的关系，这里开门见山，先说结论</p>
+<ul>
+<li><strong>LLVM编译是一个官方的过程，只需要注意编译c++ 选择相应的libc++库。</strong></li>
+<li><strong>但NDK与LLVM要很严格的兼容关系，因为是基于LLVM做了一些代码修改，和编译过程修改，因此不同版本的移植主要要解决很多未知的编译问题，要去查提交源码</strong></li>
+</ul>
+<p>这里因为我们的有些项目有NDK17和NDK21的，所以整理了了下来龙去脉</p>
+<h2 id="1、Android使用的C-兼容分析"><a href="#1、Android使用的C-兼容分析" class="headerlink" title="1、Android使用的C++兼容分析"></a>1、Android使用的C++兼容分析</h2><p><img src="https://p.ipic.vip/g0ujmq.png" alt="image-20231110112915105"></p>
+<h2 id="2、NDK与LLVM的历史债务"><a href="#2、NDK与LLVM的历史债务" class="headerlink" title="2、NDK与LLVM的历史债务"></a>2、NDK与LLVM的历史债务</h2><ul>
+<li><strong>NDK &lt; 17 git记录忘记提交llvm版本</strong></li>
+<li><strong>17 &lt;&#x3D; NDK &lt; 18 使用gnu的libstdc++</strong></li>
+<li><strong>18 &lt;&#x3D; NDK 使用stdlibc++</strong></li>
+<li><strong>19 &lt;&#x3D; NDK 使用stdlibc++ 并修改了clang</strong></li>
+</ul>
+<p><img src="https://p.ipic.vip/3r67mv.png" alt="image-20231110112939580"></p>
+<h2 id="三、PASS的断崖式接口升级影响"><a href="#三、PASS的断崖式接口升级影响" class="headerlink" title="三、PASS的断崖式接口升级影响"></a>三、PASS的断崖式接口升级影响</h2><p><strong>适配到llvm9 （NDK21）</strong><br><strong>变化 1：getOrInsertFunction 的返回值从 Function 变为 FunctionCallee变化</strong><br>表现：编译Pass时提示类型错误，代码飘红。 网上大量仓库也被迫进行修改 <a target="_blank" rel="noopener" href="https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=239175https://github.com/AFLplusplus/AFLplusplus/issues/40https://github.com/stanson-ch/beignet.SlackBuild/blob/master/patches/llvm9-support.patch">https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=239175https://github.com/AFLplusplus/AFLplusplus/issues/40https://github.com/stanson-ch/beignet.SlackBuild/blob/master/patches/llvm9-support.patch</a> 适配在这次commit中：<a target="_blank" rel="noopener" href="https://github.com/LeadroyaL/llvm-pass-tutorial/commit/e39c14206058a1b55c33a37e1b7e398df0d03960">https://github.com/LeadroyaL/llvm-pass-tutorial/commit/e39c14206058a1b55c33a37e1b7e398df0d03960</a></p>
+<p><strong>变化2：PassManager变化</strong><br>表现：加载 pass 时，控制流平坦化过程中出现错误：</p>
+<p>Assertion failed: (Resolver &amp;&amp; “Pass has not been inserted into a PassManager object!”), function getAnalysis</p>
+<p>根源是：llvm9的LowerSwitchPass里有了新的逻辑，依赖了一个 Analyze，而Analyze需要PassManager，不能凭空产生。这里其实我也不知道是为什么，反正表现出来确实是这样。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">LazyValueInfo *LVI = &amp;getAnalysis&lt;LazyValueInfoWrapperPass&gt;().getLVI(); auto *ACT = getAnalysisIfAvailable&lt;AssumptionCacheTracker&gt;();</span><br></pre></td></tr></table></figure>
+
+<h1 id="3、NDK与LLVM、PASS移植"><a href="#3、NDK与LLVM、PASS移植" class="headerlink" title="3、NDK与LLVM、PASS移植"></a>3、NDK与LLVM、PASS移植</h1><h3 id="1）方案选型"><a href="#1）方案选型" class="headerlink" title="1）方案选型"></a>1）方案选型</h3><p>1、NDK19以上使用NDK自带clang源码移植方案 + 使用高版本PASS语法</p>
+<p>2、NDK19以下使用LLVM原生clang源码移植方案 + 使用低版本PASS语法</p>
+<p><img src="https://p.ipic.vip/cupyob.png" alt="image-20231110113048447"></p>
+<p><strong>3、强烈推荐升级工程到NDK21以上，不再理会历史债务与比较旧的语法</strong></p>
+<h3 id="2）低版本NDK实战-（选读）"><a href="#2）低版本NDK实战-（选读）" class="headerlink" title="2）低版本NDK实战 （选读）"></a>2）低版本NDK实战 （选读）</h3><p><strong>采用 官方LLVM 移植 NDK文件目录方案</strong></p>
+<p>1、编译LLVM</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">mkdir targetllvm</span><br><span class="line">cd targetllvm/</span><br><span class="line"></span><br><span class="line">wget https://releases.llvm.org/7.0.1/llvm-7.0.1.src.tar.xz</span><br><span class="line">wget https://releases.llvm.org/7.0.1/cfe-7.0.1.src.tar.xz</span><br><span class="line">wget https://releases.llvm.org/7.0.1/clang-tools-extra-7.0.1.src.tar.xz</span><br><span class="line">cd targetllvm/</span><br><span class="line">tar xvf llvm-7.0.1.src.tar.xz</span><br><span class="line">tar xvf cfe-7.0.1.src.tar.xz</span><br><span class="line">tar xvf clang-tools-extra-7.0.1.src.tar.xz</span><br><span class="line">mv llvm-7.0.1.src llvm-src</span><br><span class="line">mv cfe-7.0.1.src llvm-src/tools/clang</span><br><span class="line">mv clang-tools-extra-7.0.1.src llvm-src/tools/clang/tools/extra</span><br><span class="line">mkdir llvm-src/build</span><br><span class="line">cd llvm-src/build</span><br><span class="line"></span><br><span class="line">cmake -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=ON -DLLVM_LIBDIR_SUFFIX=64 ..</span><br><span class="line">make -j8</span><br><span class="line">cd /</span><br><span class="line">mkdir llvmbuild2</span><br><span class="line">cd /targetllvm/llvm-src/build</span><br><span class="line"></span><br><span class="line">cmake -DCMAKE_INSTALL_PREFIX=/llvmbuild2 -P cmake_install.cmake</span><br></pre></td></tr></table></figure>
+
+<p>2、整合NDK</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">cd /ndk/17.2.4988734/toolchains/llvm/prebuilt/linux-x86_64/</span><br><span class="line">//删除NDK自己的lib64和clang</span><br><span class="line">rm -rf lib64</span><br><span class="line">cp -r llvmbuild2/lib64 .</span><br><span class="line">cd bin</span><br><span class="line">cp -r llvmbuild2/bin/* .</span><br><span class="line"></span><br><span class="line">vim /ndk/17.2.4988734/build/cmake/android.toolchain.cmake</span><br><span class="line"></span><br><span class="line">进入后把-g 去掉</span><br></pre></td></tr></table></figure>
+
+<p>3、整合工程，适配C++</p>
+<p><strong>在工程CMAKE中添加（在低版本的插入pass中，需要添加这几个，不然编译器会报错）</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">set(CMAKE_C_COMPILER_WORKS 1)</span><br><span class="line">set(CMAKE_CXX_COMPILER_WORKS 1)</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://p.ipic.vip/x1a7t5.png" alt="image2022-9-23_10-45-34"></p>
+<p>4、写一个Hello Pass</p>
+<p>进入到目录中</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">cd /targetllvm/llvm-src/lib/Transforms/</span><br><span class="line">mkdir hellopass</span><br><span class="line">//在Transforms目录下，再对CMakelist修改，添加add_subdirectory(hellopass)</span><br><span class="line">cd hellopass</span><br><span class="line">//hellopass</span><br><span class="line">vim CMakelists.txt</span><br></pre></td></tr></table></figure>
+
+<p>增加如下代码</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">add_llvm_loadable_module( LLVMhellopass MODULE</span><br><span class="line">hellopass.cpp</span><br><span class="line">PLUGIN_TOOL</span><br><span class="line">opt</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<p>编写Pass</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;llvm/Pass.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;llvm/IR/Function.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;llvm/Support/raw_ostream.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;llvm/IR/LegacyPassManager.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;llvm/Transforms/IPO/PassManagerBuilder.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> llvm;</span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> &#123;</span><br><span class="line">  <span class="keyword">struct</span> <span class="title class_">HelloPass</span> : <span class="keyword">public</span> FunctionPass &#123;</span><br><span class="line">    <span class="type">static</span> <span class="type">char</span> ID;</span><br><span class="line">    <span class="built_in">Hello</span>() : <span class="built_in">FunctionPass</span>(ID) &#123;&#125;</span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">runOnFunction</span><span class="params">(Function &amp;F)</span> <span class="keyword">override</span> </span>&#123;</span><br><span class="line">      <span class="built_in">errs</span>() &lt;&lt; <span class="string">&quot;HelloPass: &quot;</span>;</span><br><span class="line">      <span class="built_in">errs</span>().<span class="built_in">write_escaped</span>(F.<span class="built_in">getName</span>()) &lt;&lt; <span class="string">&#x27;\n&#x27;</span>;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">char</span> HelloPass::ID = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Register for opt</span></span><br><span class="line"><span class="function"><span class="type">static</span> RegisterPass&lt;HelloPass&gt; <span class="title">X</span><span class="params">(<span class="string">&quot;hellopass&quot;</span>, <span class="string">&quot;Hello World Pass&quot;</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Register for clang</span></span><br><span class="line"><span class="function"><span class="type">static</span> RegisterStandardPasses <span class="title">Y</span><span class="params">(PassManagerBuilder::EP_EarlyAsPossible,</span></span></span><br><span class="line"><span class="params"><span class="function">  [](<span class="type">const</span> PassManagerBuilder &amp;Builder, legacy::PassManagerBase &amp;PM) &#123;</span></span></span><br><span class="line"><span class="params"><span class="function">    PM.add(<span class="keyword">new</span> HelloPass());</span></span></span><br><span class="line"><span class="params"><span class="function">  &#125;)</span></span>;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>重新回到**&#x2F;targetllvm&#x2F;llvm-src&#x2F;build, 运行**</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">make -j8</span><br><span class="line">cmake -DCMAKE_INSTALL_PREFIX=/llvmbuild -P cmake_install.cmake</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+<h3 id="3）高版本NDK23实战"><a href="#3）高版本NDK23实战" class="headerlink" title="3）高版本NDK23实战"></a>3）高版本NDK23实战</h3><p>首先需要准备Linux虚拟机进行交叉编译，因为NDK不支持在Windows上直接编译，我这里使用的是<strong>Ubuntu 20.04.3</strong>；NDK版本我选择的是<strong>23.1.7779620</strong>。</p>
+<p>第一步、用NDKManager，下载NDK23，查看下</p>
+<p><code>vim 23.1.7779620/toolchains/llvm/prebuilt/linux-x86_64/AndroidVersion.txt</code></p>
+<p>内容为找到LLVM版本为12.0.8， 基线是<strong>r416183c1</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">12.0.8</span><br><span class="line">based on r416183c1</span><br></pre></td></tr></table></figure>
+
+<p>第二步、下载llvm-android源代码（注意不是llvm源代码）</p>
+<p>NDK使用的是<code>git-repo</code>这一工具管理，而不是<code>git</code>，所以首先需要安装<code>git-repo</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl https://storage.googleapis.com/git-repo-downloads/repo &gt; /usr/bin/repo</span><br><span class="line">chmod a+x /usr/bin/repo</span><br></pre></td></tr></table></figure>
+
+<p>第三步、在<code>https://android.googlesource.com/toolchain/llvm_android/</code>中找到对应版本的 llvm-android 源码：</p>
+<p>![image-20231110120722738](&#x2F;Users&#x2F;cao884203&#x2F;Library&#x2F;Application Support&#x2F;typora-user-images&#x2F;image-20231110120722738.png)</p>
+<p>第四步、接下来按照官方文档的方法</p>
+<p><a target="_blank" rel="noopener" href="https://android.googlesource.com/toolchain/llvm_android/+/refs/heads/llvm-r416183">https://android.googlesource.com/toolchain/llvm_android/+/refs/heads/llvm-r416183</a></p>
+<p>1、构建命令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">mkdir llvm-toolchain &amp;&amp; cd llvm-toolchain</span><br><span class="line">$ repo init -u https://android.googlesource.com/platform/manifest -b llvm-toolchain</span><br><span class="line">$ repo sync -c</span><br><span class="line">$ python toolchain/llvm_android/build.py</span><br></pre></td></tr></table></figure>
+
+<p>如果你的 <code>$PATH</code> 中存在另一个已构建的 llvm 目录树，那么在为 Windows 的 libcxxabi 进行构建时，build.py 可能会报错，错误信息为 ‘libstdc++ version must be at least 4.8.’。解决方法是在调用 build.py 之前，从你的 <code>$PATH</code> 中移除这个路径。</p>
+<p>2、重建特定工具链版本的说明： </p>
+<p>若要重建特定的工具链，首先需要找到该版本的清单文件</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ $TOOLCHAIN_DIR/bin/clang -v</span><br><span class="line">Android (6317467 based on r365631c1) clang version 9.0.8...</span><br></pre></td></tr></table></figure>
+
+<p>那么构建号就是 6317467 所以 manifest在 <code>$TOOLCHAIN_DIR/manifest_6317467.xml</code></p>
+<p>用该manifest重编译</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">$ mkdir llvm-toolchain &amp;&amp; cd llvm-toolchain</span><br><span class="line">$ repo init -u https://android.googlesource.com/platform/manifest -b llvm-toolchain</span><br><span class="line">$ cp $TOOLCHAIN_DIR/manifest_6317467.xml .repo/manifests</span><br><span class="line">$ repo init -m manifest_6317467.xml</span><br><span class="line">$ repo sync -c</span><br><span class="line"></span><br><span class="line"># Optional: Apply any LLVM/Clang modifications to toolchain/llvm-project</span><br><span class="line"></span><br><span class="line">$ python toolchain/llvm_android/build.py</span><br></pre></td></tr></table></figure>
+
+<p>3、优化</p>
+<p>在编译之前需要提前安装一些环境，否则编译会出错：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apt install cmake bison</span><br></pre></td></tr></table></figure>
+
+<p>如果是在Ubuntu 20.04.3下还需要做一个软链接，否则会报错<code>ImportError: libffi.so.6: cannot open shared object file: No such file or directory</code>。具体操作如下：<br><img src="https://bbs.kanxue.com/upload/attach/202201/910514_A867QTEZ993UG2B.png" alt="图片描述"><br>然后就可以开始愉快且漫长的编译了（大概需要一两个小时，取决于机器性能）：</p>
+<p>然后就可以开始愉快且漫长的编译了（大概需要一两个小时，取决于机器性能）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python toolchain/llvm_android/build.py</span><br></pre></td></tr></table></figure>
+
+<p>4、写PASS ，和Helloworld 写法相同，语法略有不同</p>
+<p>5、编译好后<code>out/install/windows-x86/clang-dev</code>中对应的就是NDK中的<code>23.1.7779620/toolchains/llvm/prebuilt/linux-x86_64/</code>部分, 之后将linux-x86_64全部替换为clang-dev的内容</p>
+<p>其他注意：</p>
+<p>python toolchain&#x2F;llvm_android&#x2F;build.py –no-build linux 出现错误大全</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">/llvm-toolchain/out/llvm-project/llvm/include/llvm/Transforms/Obfuscation/MBAUtils.h:1:10: fatal error: &#x27;z3++.h&#x27; file not found</span><br><span class="line">#include &quot;z3++.h&quot;</span><br></pre></td></tr></table></figure>
+
+<p>安装依赖<br>sudo apt install libz3-dev</p>
+<h2 id="3、实战-：获得指定函数耗时"><a href="#3、实战-：获得指定函数耗时" class="headerlink" title="3、实战 ：获得指定函数耗时"></a>3、实战 ：获得指定函数耗时</h2><p>进入到目录中</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">cd /targetllvm/llvm-src/lib/Transforms/</span><br><span class="line">mkdir yourpass</span><br><span class="line">//在Transforms目录下，再对CMakelist修改，添加add_subdirectory(yourpass)</span><br><span class="line">cd yourpass</span><br><span class="line">//在yourpass文件夹里，如果你是llvm7</span><br><span class="line">vim CMakelists.txt</span><br></pre></td></tr></table></figure>
+
+<p>增加如下代码</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">add_llvm_loadable_module( LLVMyoupass MODULE</span><br><span class="line">yourpass.cpp</span><br><span class="line">PLUGIN_TOOL</span><br><span class="line">opt</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<p>插入简单插桩pass，将函数耗时打印出来</p>
+<img src="https://p.ipic.vip/26zgey.jpg" alt="78b91181f11b4056b7318c725c213f7b" style="zoom:150%;" />
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br></pre></td><td class="code"><pre><span class="line">//===- Hello.cpp - Example code from &quot;Writing an LLVM Pass&quot; ---------------===//</span><br><span class="line">//</span><br><span class="line">// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.</span><br><span class="line">// See https://llvm.org/LICENSE.txt for license information.</span><br><span class="line">// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception</span><br><span class="line">//</span><br><span class="line">//===----------------------------------------------------------------------===//</span><br><span class="line">//</span><br><span class="line">//</span><br><span class="line">#include &quot;llvm/Pass.h&quot;</span><br><span class="line">#include &quot;llvm/IR/Function.h&quot;</span><br><span class="line">#include &quot;llvm/Support/raw_ostream.h&quot;</span><br><span class="line"></span><br><span class="line">#include &quot;llvm/IR/LegacyPassManager.h&quot;</span><br><span class="line">#include &quot;llvm/Transforms/IPO/PassManagerBuilder.h&quot;</span><br><span class="line">#include &quot;llvm/ADT/Statistic.h&quot;</span><br><span class="line">#include &quot;llvm/Demangle/Demangle.h&quot;</span><br><span class="line">#include &quot;llvm/IR/BasicBlock.h&quot;</span><br><span class="line">#include &quot;llvm/IR/Constants.h&quot;</span><br><span class="line">#include &quot;llvm/IR/IRBuilder.h&quot;</span><br><span class="line">#include &quot;llvm/IR/Instruction.h&quot;</span><br><span class="line">#include &quot;llvm/IR/Instructions.h&quot;</span><br><span class="line">#include &quot;llvm/IR/Module.h&quot;</span><br><span class="line">#include &quot;llvm/IR/Value.h&quot;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">using namespace llvm;</span><br><span class="line"></span><br><span class="line">namespace &#123;</span><br><span class="line"></span><br><span class="line">  struct Yourpass : public FunctionPass &#123;</span><br><span class="line">      static char ID;</span><br><span class="line"></span><br><span class="line">      yourpass() : FunctionPass(ID) &#123;&#125;</span><br><span class="line"></span><br><span class="line">      bool runOnFunction(Function &amp;F) override &#123;</span><br><span class="line"></span><br><span class="line">        printf(&quot;------------- runOnFunction --------------\n&quot;);</span><br><span class="line">        //过滤自己</span><br><span class="line">        if (F.getName().startswith(&quot;my_fun_&quot;))</span><br><span class="line">        &#123;</span><br><span class="line">          return false;</span><br><span class="line">        &#125;</span><br><span class="line">        //过滤系统函数</span><br><span class="line">        if (F.getName().startswith(&quot;_ZN&quot;) )</span><br><span class="line">        &#123;</span><br><span class="line">            return false;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        if (F.getName().startswith(&quot;__&quot;) )</span><br><span class="line">        &#123;</span><br><span class="line">            return false;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        errs() &lt;&lt; &quot;Hello: yourpass&quot;;</span><br><span class="line">        errs().write_escaped(F.getName()) &lt;&lt; &#x27;\n&#x27;;</span><br><span class="line">        //获取上下文</span><br><span class="line">        LLVMContext &amp;context = F.getParent()-&gt;getContext();</span><br><span class="line">        //从Fuction里拿到BasicBlock</span><br><span class="line">        BasicBlock &amp;bb = F.getEntryBlock();</span><br><span class="line">        //BasicBlock拿第一个指令</span><br><span class="line">        Instruction *beginInst = dyn_cast&lt;Instruction&gt;(bb.begin());</span><br><span class="line">        //函数参数与返回值构造</span><br><span class="line">        FunctionType *type = FunctionType::get(Type::getInt64Ty(context), &#123;&#125;, false);</span><br><span class="line">        //从当前函数的parent的list里拿到待插入的my_fun_b函数</span><br><span class="line">        Constant *beginFun = F.getParent()-&gt;getOrInsertFunction(&quot;my_fun_b&quot;, type);</span><br><span class="line">        Value *beginTime = nullptr;</span><br><span class="line"></span><br><span class="line">        if (Function *fun = dyn_cast&lt;Function&gt;(beginFun))</span><br><span class="line">        &#123;</span><br><span class="line">            //把my_fun_b 生成出来</span><br><span class="line">            CallInst *inst = CallInst::Create(fun);</span><br><span class="line">            //插入到当前函数的第一条instruction之前</span><br><span class="line">            inst-&gt;insertBefore(beginInst);</span><br><span class="line">            //把返回值赋值给beginTime</span><br><span class="line">            beginTime = inst;</span><br><span class="line">        &#125;</span><br><span class="line">        return false;</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;; // end of struct Hello</span><br><span class="line">&#125;  // end of anonymous namespace</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">char yourpass::ID = 0;</span><br><span class="line">static RegisterPass &lt;Yourpass&gt; X(&quot;hello&quot;, &quot;Hello World yourpass Pass&quot;,</span><br><span class="line">                                  false /* Only looks at CFG */,</span><br><span class="line">                                  false /* Analysis Pass */);</span><br><span class="line"></span><br><span class="line">static RegisterStandardPasses Y(</span><br><span class="line">        PassManagerBuilder::EP_EarlyAsPossible,</span><br><span class="line">        [](const PassManagerBuilder &amp;Builder,</span><br><span class="line">           legacy::PassManagerBase &amp;PM) &#123; PM.add(new yourpass()); &#125;);</span><br></pre></td></tr></table></figure>
+
+
+
+<p>插入简单插桩pass，将函数耗时打印出来</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">extern &quot;C&quot; long long my_fun_b()&#123;</span><br><span class="line">    struct timeval star;</span><br><span class="line">    gettimeofday(&amp;star, NULL);</span><br><span class="line">    long long b = star.tv_sec * 1000 + star.tv_usec / 1000;</span><br><span class="line">    return b;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">extern &quot;C&quot; void my_fun_e(char *name,long long b)&#123;</span><br><span class="line">    struct timeval end;</span><br><span class="line">    gettimeofday(&amp;end, NULL);</span><br><span class="line">    long long e = end.tv_sec * 1000 + end.tv_usec /1000;</span><br><span class="line">    long t =(long)(e - b);</span><br><span class="line">    int size = strlen(name);</span><br><span class="line">    if(name[size] != &#x27;\0&#x27;)&#123;</span><br><span class="line">        return;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    std::string funcname(name);</span><br><span class="line"></span><br><span class="line">    if(t &gt; 20) &#123;</span><br><span class="line">    LOGD(&quot;func name: %s time:%ld ms \n&quot; ,name, t);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果是NDK23 ，可以用以下命令试试编译一个Hello的文件，再集成到NDK中工程中</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/Android/sdk/ndk/23.1.7779620/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++ -Xclang -load -Xclang /llvm-toolchain/out/install/linux-x86/clang-dev/lib64/yourpass.so Hello.cpp -o Hello -g</span><br></pre></td></tr></table></figure>
+
+
+
+<p>官方链接：<a target="_blank" rel="noopener" href="https://android.googlesource.com/toolchain/llvm_android/">https://android.googlesource.com/toolchain/llvm_android/</a></p>
+<p>看雪教程：<a target="_blank" rel="noopener" href="https://bbs.kanxue.com/thread-271271.htm">https://bbs.kanxue.com/thread-271271.htm</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/pass-llvm/" rel="tag"># pass llvm</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/11/03/%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A53-ASM%20%E5%AF%B9lambda%E8%AF%AD%E6%B3%95%E7%B3%96%E7%9A%84hook/" rel="prev" title="从零单学跨平台无埋点上报3-ASM对lambda语法糖的hook">
+      <i class="fa fa-chevron-left"></i> 从零单学跨平台无埋点上报3-ASM对lambda语法糖的hook
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/11/08/%E4%BB%8E%E9%9B%B6%E5%8D%95%E5%AD%A6%E8%B7%A8%E5%B9%B3%E5%8F%B0%E6%97%A0%E5%9F%8B%E7%82%B9%E4%B8%8A%E6%8A%A56-C++PASS%E6%8F%92%E6%A1%A9%E5%AE%9E%E6%88%98/" rel="next" title="从零单学跨平台无埋点上报5-C-PASS插桩实战">
+      从零单学跨平台无埋点上报5-C-PASS插桩实战 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E5%89%8D%E6%96%87%E5%9B%9E%E9%A1%BE-LLVM%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86"><span class="nav-number">1.</span> <span class="nav-text">一、前文回顾 -LLVM编译原理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E6%8C%91%E6%88%98-%EF%BC%9ANDK%E9%80%82%E9%85%8D"><span class="nav-number">2.</span> <span class="nav-text">二、挑战 ：NDK适配</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1%E3%80%81Android%E4%BD%BF%E7%94%A8%E7%9A%84C-%E5%85%BC%E5%AE%B9%E5%88%86%E6%9E%90"><span class="nav-number">2.1.</span> <span class="nav-text">1、Android使用的C++兼容分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2%E3%80%81NDK%E4%B8%8ELLVM%E7%9A%84%E5%8E%86%E5%8F%B2%E5%80%BA%E5%8A%A1"><span class="nav-number">2.2.</span> <span class="nav-text">2、NDK与LLVM的历史债务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81PASS%E7%9A%84%E6%96%AD%E5%B4%96%E5%BC%8F%E6%8E%A5%E5%8F%A3%E5%8D%87%E7%BA%A7%E5%BD%B1%E5%93%8D"><span class="nav-number">2.3.</span> <span class="nav-text">三、PASS的断崖式接口升级影响</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#3%E3%80%81NDK%E4%B8%8ELLVM%E3%80%81PASS%E7%A7%BB%E6%A4%8D"><span class="nav-number">3.</span> <span class="nav-text">3、NDK与LLVM、PASS移植</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%EF%BC%89%E6%96%B9%E6%A1%88%E9%80%89%E5%9E%8B"><span class="nav-number">3.0.1.</span> <span class="nav-text">1）方案选型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%EF%BC%89%E4%BD%8E%E7%89%88%E6%9C%ACNDK%E5%AE%9E%E6%88%98-%EF%BC%88%E9%80%89%E8%AF%BB%EF%BC%89"><span class="nav-number">3.0.2.</span> <span class="nav-text">2）低版本NDK实战 （选读）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3%EF%BC%89%E9%AB%98%E7%89%88%E6%9C%ACNDK23%E5%AE%9E%E6%88%98"><span class="nav-number">3.0.3.</span> <span class="nav-text">3）高版本NDK23实战</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3%E3%80%81%E5%AE%9E%E6%88%98-%EF%BC%9A%E8%8E%B7%E5%BE%97%E6%8C%87%E5%AE%9A%E5%87%BD%E6%95%B0%E8%80%97%E6%97%B6"><span class="nav-number">3.1.</span> <span class="nav-text">3、实战 ：获得指定函数耗时</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">christie</p>
+  <div class="site-description" itemprop="description">终身学习</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">5</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">christie</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
